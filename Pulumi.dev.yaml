@@ -1,0 +1,5 @@
+config:
+  aws:region: us-east-1
+  pulumi-aws-django:containerPort: "8000"
+  pulumi-aws-django:cpu: "512"
+  pulumi-aws-django:memory: "128"
