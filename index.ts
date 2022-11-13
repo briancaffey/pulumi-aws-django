@@ -1,1 +1,1 @@
-export { AdHocEnvironmentComponent } from './lib'
+export * from './lib'
