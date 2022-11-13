@@ -1,5 +1,6 @@
 {
 	"name": "pulumi-aws-django",
+	"type": "module",
 	"devDependencies": {
 		"@types/node": "^14"
 	},
