@@ -1,6 +1,7 @@
 {
 	"name": "pulumi-aws-django",
 	"type": "module",
+	"main": "./bin/index.js",
 	"devDependencies": {
 		"@types/node": "^14"
 	},
