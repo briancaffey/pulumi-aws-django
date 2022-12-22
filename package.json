@@ -1,5 +1,8 @@
 {
   "name": "pulumi-aws-django",
+  "version": "0.0.0",
+  "main": "bin/index.js",
+  "typings": "bin/index.d.ts",
   "devDependencies": {
     "@types/node": "^14"
   },

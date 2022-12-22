@@ -10,9 +10,10 @@
         "pretty": true,
         "noFallthroughCasesInSwitch": true,
         "noImplicitReturns": true,
-        "forceConsistentCasingInFileNames": true
+        "forceConsistentCasingInFileNames": true,
+        "declaration": true
     },
     "files": [
-        "index.ts"
+        "index.ts", "src/**/*"
     ]
 }
