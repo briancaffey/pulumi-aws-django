@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.0](https://github.com/briancaffey/pulumi-aws-django/compare/v1.0.0...v1.1.0) (2022-12-23)
+
+
+### Features
+
+* **example:** add example and makefile targets for pulumi up and destroy ([5745347](https://github.com/briancaffey/pulumi-aws-django/commit/5745347f6779ecd17c7744bcaf9087f368849f9d))
+
 ## 1.0.0 (2022-12-22)
 
 
