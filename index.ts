@@ -1,10 +1,16 @@
-import * as aws from "@pulumi/aws";
+import * as aws from "@pulumi/aws"
+import * as awsx from "@pulumi/awsx";
 import * as pulumi from "@pulumi/pulumi";
+
+// interface AdHocBaseEnvComponentProps {
+//   certificateArn: string;
+//   domainName: string
+// }
 
 /**
  * Static website using Amazon S3, CloudFront, and Route53.
  */
-export class AdHocEnvironmentComponent extends pulumi.ComponentResource {
+export class AdHocBaseEnvComponent extends pulumi.ComponentResource {
 
   /**
    * Creates a new static website hosted on AWS.
@@ -18,8 +24,13 @@ export class AdHocEnvironmentComponent extends pulumi.ComponentResource {
 
     super("pulumi-contrib:components:AdHoc", name, inputs, opts);
 
-    new aws.ec2.Vpc("main", {
+    const vpc = new awsx.ec2.Vpc("main", {
       cidrBlock: "10.0.0.0/16",
+      numberOfAvailabilityZones: 2,
     });
+
+    // const assetsBucket = new aws.s3.Bucket("assetsBucket", {
+    //   bucket: 'my-bucket'
+    // })
   }
 }
