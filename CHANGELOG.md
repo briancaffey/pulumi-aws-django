@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.0](https://github.com/briancaffey/pulumi-aws-django/compare/v1.2.0...v1.3.0) (2022-12-26)
+
+
+### Features
+
+* **app:** set up initial app component and refactor examples dir ([b4c2467](https://github.com/briancaffey/pulumi-aws-django/commit/b4c24676560a5ea6c89938749001ac6cbeb49390))
+
 ## [1.2.0](https://github.com/briancaffey/pulumi-aws-django/compare/v1.1.0...v1.2.0) (2022-12-24)
 
 
