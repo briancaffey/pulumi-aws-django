@@ -1,7 +1,7 @@
 import * as aws from "@pulumi/aws"
 import * as awsx from "@pulumi/awsx";
 import * as pulumi from "@pulumi/pulumi";
-import { RdsResources } from './src/components/internal/rds';
+import { RdsResources } from '../../internal/rds';
 
 /**
  * The inputs needed for setting up and ad hoc environment
@@ -20,6 +20,7 @@ export class AdHocBaseEnvComponent extends pulumi.ComponentResource {
   public vpc: awsx.ec2.Vpc;
   public alb: aws.alb.LoadBalancer;
   public appSecurityGroup: aws.ec2.SecurityGroup;
+  public albSecurityGroup: aws.ec2.SecurityGroup;
   public serviceDiscoveryNamespace: aws.servicediscovery.PrivateDnsNamespace;
   public databaseInstance: aws.rds.Instance;
   public assetsBucket: aws.s3.Bucket;
@@ -74,6 +75,7 @@ export class AdHocBaseEnvComponent extends pulumi.ComponentResource {
         cidrBlocks: ["0.0.0.0/0"],
       }],
     });
+    this.albSecurityGroup = albSecurityGroup;
 
     const appSecurityGroup = new aws.ec2.SecurityGroup('AppSecurityGroup', {
       description: "Allow traffic from ALB SG to apps",
@@ -107,6 +109,7 @@ export class AdHocBaseEnvComponent extends pulumi.ComponentResource {
       vpcId: vpc.vpc.id,
       port: 80,
       targetType: "instance",
+      protocol: "HTTP",
       healthCheck: {
         interval: 300,
         path: "/api/health-check/",
