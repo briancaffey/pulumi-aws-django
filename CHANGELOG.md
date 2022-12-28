@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.4.0](https://github.com/briancaffey/pulumi-aws-django/compare/v1.3.0...v1.4.0) (2022-12-28)
+
+
+### Features
+
+* **adhoc:** finish basic ad hoc environment with base and app components ([b63ecf5](https://github.com/briancaffey/pulumi-aws-django/commit/b63ecf5c340cf78dd85b3502a99f3fbfa39cdaf7))
+
 ## [1.3.0](https://github.com/briancaffey/pulumi-aws-django/compare/v1.2.0...v1.3.0) (2022-12-26)
 
 
