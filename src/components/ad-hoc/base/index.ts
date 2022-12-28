@@ -2,6 +2,7 @@ import * as aws from "@pulumi/aws"
 import * as awsx from "@pulumi/awsx";
 import * as pulumi from "@pulumi/pulumi";
 import { RdsResources } from '../../internal/rds';
+import { BastionHostResources } from '../../internal/bastion';
 
 /**
  * The inputs needed for setting up and ad hoc environment
@@ -26,6 +27,7 @@ export class AdHocBaseEnvComponent extends pulumi.ComponentResource {
   public assetsBucket: aws.s3.Bucket;
   public domainName: string;
   public listener: aws.alb.Listener;
+  public stackName: string;
 
   /**
    * Creates base resources to support ad hoc application environments
@@ -34,13 +36,13 @@ export class AdHocBaseEnvComponent extends pulumi.ComponentResource {
    * @param opts A bag of options that control this resource's behavior.
    */
   constructor(name: string, props: AdHocBaseEnvComponentProps, opts?: pulumi.ResourceOptions) {
-    super("pulumi-contrib:components:AdHoc", name, props, opts);
+    super("pulumi-contrib:components:AdHocBaseEnv", name, props, opts);
 
     const stackName = pulumi.getStack();
+    this.stackName = stackName;
 
     this.domainName = props.domainName;
 
-    // the vpc component provided by awsx provides the vpc and all related resources
     const vpc = new awsx.ec2.Vpc(stackName, {
       cidrBlock: "10.0.0.0/16",
       numberOfAvailabilityZones: 2,
@@ -167,5 +169,12 @@ export class AdHocBaseEnvComponent extends pulumi.ComponentResource {
       vpc: vpc
     });
     this.databaseInstance = rdsResources.databaseInstance;
+
+    // BastionHost
+    const bastionHost = new BastionHostResources("BastionHostResources", {
+      appSgId: appSecurityGroup.arn,
+      rdsAddress: rdsResources.databaseInstance.address,
+      privateSubnet: vpc.privateSubnetIds[0]
+    });
   }
 }

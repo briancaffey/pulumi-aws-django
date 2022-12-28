@@ -57,6 +57,7 @@ const adHocAppComponent = new AdHocAppComponent("AdHocAppComponent", {
   serviceDiscoveryNamespaceId,
   rdsAddress,
   domainName,
+  baseStackName: "dev"
 })
 
 
