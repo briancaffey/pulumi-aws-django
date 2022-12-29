@@ -6,7 +6,7 @@ interface ManagementCommandTaskProps {
   // defined locally
   name: string;
   command: string[];
-  envVars: { [key: string]: string };
+  envVars: { [key: string]: pulumi.Input<string> | string }[];
   logRetentionInDays: number;
   cpu: string;
   memory: string;
@@ -14,17 +14,17 @@ interface ManagementCommandTaskProps {
   logStreamPrefix: string;
   containerName: string;
   // from base stack
-  appSgId: string;
-  privateSubnets: string[];
+  appSgId: pulumi.Output<string>;
+  privateSubnets: pulumi.Output<string[]>;
   // inputs from this stack
-  image: Input<string>;
+  image: string;
   ecsClusterId: Input<string>;
   executionRoleArn: Input<string>;
   taskRoleArn: Input<string>;
 }
 
 export class ManagementCommandTask extends pulumi.ComponentResource {
-  public executionScript: string;
+  public executionScript: pulumi.Output<string>;
   /**
    * Creates a new static website hosted on AWS.
    * @param name The _unique_ name of the resource.
@@ -37,19 +37,19 @@ export class ManagementCommandTask extends pulumi.ComponentResource {
     super(`pulumi-contrib:components:${props.name}ManagementCommandTask`, name, props, opts);
 
     // aws cloudwatch log group
-    const cwLogGroup = new aws.cloudwatch.LogGroup("logGroup", {
+    const cwLogGroup = new aws.cloudwatch.LogGroup(`${props.name}LogGroup`, {
       name: props.logGroupName,
       retentionInDays: props.logRetentionInDays
     });
 
     // aws cloudwatch log stream
-    const cwLogStream = new aws.cloudwatch.LogStream("logStream", {
+    const cwLogStream = new aws.cloudwatch.LogStream(`${props.name}LogStream`, {
       logGroupName: cwLogGroup.name,
       name: props.logStreamPrefix
     });
 
     // aws ecs task definition
-    const taskDefinition = new aws.ecs.TaskDefinition("taskDefinition", {
+    const taskDefinition = new aws.ecs.TaskDefinition(`${props.name}TaskDefinition`, {
       containerDefinitions: JSON.stringify([
         {
           name: props.name,
@@ -59,7 +59,7 @@ export class ManagementCommandTask extends pulumi.ComponentResource {
             logDriver: "awslogs",
             options: {
               "awslogs-group": props.logGroupName,
-              "awslogs-region": region.name,
+              "awslogs-region": "us-east-1",
               "awslogs-stream-prefix": props.logStreamPrefix
             }
           },
@@ -75,10 +75,10 @@ export class ManagementCommandTask extends pulumi.ComponentResource {
     });
 
     // this script is called once on initial setup from GitHub Actions
-    const executionScript = `
+    const executionScript = pulumi.interpolate`
 START_TIME=$(date +%s000)
 
-TASK_ID=$(aws ecs run-task --cluster ${props.ecsClusterId} --task-definition ${taskDefinition.arn} --launch-type FARGATE --network-configuration "awsvpcConfiguration={subnets=[${props.privateSubnets.join(",")}],securityGroups=[${props.appSgId}],assignPublicIp=ENABLED}" | jq -r '.tasks[0].taskArn')
+TASK_ID=$(aws ecs run-task --cluster ${props.ecsClusterId} --task-definition ${taskDefinition.arn} --launch-type FARGATE --network-configuration "awsvpcConfiguration={subnets=[${props.privateSubnets.apply(x => x.join(","))}],securityGroups=[${props.appSgId}],assignPublicIp=ENABLED}" | jq -r '.tasks[0].taskArn')
 
 aws ecs wait tasks-stopped --tasks $TASK_ID --cluster ${props.ecsClusterId}
 

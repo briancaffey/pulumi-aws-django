@@ -80,9 +80,9 @@ export class IamResources extends pulumi.ComponentResource {
     });
     this.taskExecutionRole = ecsTaskExecutionRole;
 
-    new aws.iam.RolePolicy("EcsTaskPolicy", {
+    new aws.iam.RolePolicy("EcsTaskExecutionPolicy", {
       name: `${stackName}EcsTaskPolicy`,
-      role: ecsTaskRole.id,
+      role: ecsTaskExecutionRole.id,
       policy: JSON.stringify({
         Version: "2012-10-17",
         Statement: [
@@ -94,6 +94,27 @@ export class IamResources extends pulumi.ComponentResource {
           {
             Effect: "Allow",
             Action: ["secretsmanager:GetSecretValue"],
+            Resource: ["*"]
+          },
+          {
+            Effect: "Allow",
+            Action: ["ecr:AmazonEC2ContainerRegistryReadOnly", "ecr:*"],
+            Resource: ["*"]
+          },
+          {
+            Effect: "Allow",
+            Action: [
+              'ecs:*',
+              'ec2:*',
+              'elasticloadbalancing:*',
+              'ecr:*',
+              'cloudwatch:*',
+              's3:*',
+              'rds:*',
+              'logs:*',
+              'elasticache:*',
+              'secretsmanager:*',
+            ],
             Resource: ["*"]
           },
           {

@@ -1,12 +1,13 @@
 import * as aws from "@pulumi/aws"
 import * as pulumi from "@pulumi/pulumi";
-import { Input } from "@pulumi/pulumi";
+import { Input, Output } from "@pulumi/pulumi";
 
 interface WebEcsServiceProps {
   // defined locally
   name: string;
-  command: string[],
-  envVars: { [key: string]: string };
+  command: Input<string[]>,
+  // envVars?: pulumi.Input<{ "name": string, "value": pulumi.Output<string> | string }[]>;
+  envVars?: { [key: string]: pulumi.Input<string> | string }[];
   logRetentionInDays: number;
   port: number;
   cpu: string;
@@ -18,16 +19,15 @@ interface WebEcsServiceProps {
   healthCheckInterval?: number;
   healthCheckHealthyThreshold?: number;
   // alb
-  listenerArn: string;
+  listenerArn: Input<string>;
   pathPatterns: string[];
-  hostName: string;
+  hostName: pulumi.Output<string>;
   // from base stack
-  appSgId: string;
-  privateSubnets: string[];
-  targetGroupArn: string;
-  vpcId: string;
+  appSgId: Input<string>;
+  privateSubnets: pulumi.Input<string[]>;
+  vpcId: pulumi.Input<string>;
   // inputs from this stack
-  image: Input<string>;
+  image: string;
   ecsClusterId: Input<string>;
   executionRoleArn: Input<string>;
   taskRoleArn: Input<string>;
@@ -35,6 +35,7 @@ interface WebEcsServiceProps {
 
 export class WebEcsService extends pulumi.ComponentResource {
   // public foo: aws.foo.bar;
+  public readonly listenerRule: aws.alb.ListenerRule;
   /**
    * Creates a new static website hosted on AWS.
    * @param name The _unique_ name of the resource.
@@ -47,29 +48,31 @@ export class WebEcsService extends pulumi.ComponentResource {
     super(`pulumi-contrib:components:${props.name}WebEcsService`, name, props, opts);
 
     // aws cloudwatch log group
-    const cwLogGroup = new aws.cloudwatch.LogGroup("logGroup", {
+    const cwLogGroup = new aws.cloudwatch.LogGroup(`${props.name}LogGroup`, {
       name: props.logGroupName,
       retentionInDays: props.logRetentionInDays
     });
 
     // aws cloudwatch log stream
-    const cwLogStream = new aws.cloudwatch.LogStream("logStream", {
+    const cwLogStream = new aws.cloudwatch.LogStream(`${props.name}LogStream`, {
       logGroupName: cwLogGroup.name,
       name: props.logStreamPrefix
     });
 
     // aws ecs task definition
-    const taskDefinition = new aws.ecs.TaskDefinition("taskDefinition", {
+    const taskDefinition = new aws.ecs.TaskDefinition(`${props.name}TaskDefinition`, {
       containerDefinitions: JSON.stringify([
         {
           name: props.name,
           image: props.image,
+          command: props.command,
+          environment: props.envVars,
           essential: true,
           logConfiguration: {
             logDriver: "awslogs",
             options: {
               "awslogs-group": props.logGroupName,
-              "awslogs-region": region.name,
+              "awslogs-region": "us-east-1",
               "awslogs-stream-prefix": props.logStreamPrefix
             }
           },
@@ -91,8 +94,28 @@ export class WebEcsService extends pulumi.ComponentResource {
       memory: props.memory,
     });
 
+    const targetGroup = new aws.alb.TargetGroup(`${props.name}TargetGroup`, {
+      port: props.port,
+      protocol: "HTTP",
+      targetType: "ip",
+      vpcId: props.vpcId,
+      healthCheck: {
+        timeout: 2,
+        protocol: "HTTP",
+        port: "traffic-port",
+        path: props.healthCheckPath,
+        matcher: "200-399",
+        interval: props.healthCheckInterval ?? 5,
+        unhealthyThreshold: 3,
+        healthyThreshold: props.healthCheckHealthyThreshold ?? 2,
+      },
+      tags: {
+        Name: `${stackName}-${props.name}-tg`
+      }
+    });
+
     // aws ecs service
-    const ecsService = new aws.ecs.Service("WebService", {
+    const ecsService = new aws.ecs.Service(`${props.name}WebService`, {
       name: `${stackName}-${props.name}`,
       cluster: props.ecsClusterId,
       taskDefinition: taskDefinition.arn,
@@ -108,7 +131,7 @@ export class WebEcsService extends pulumi.ComponentResource {
         },
       ],
       loadBalancers: [{
-        targetGroupArn: props.targetGroupArn,
+        targetGroupArn: targetGroup.arn,
         containerName: props.name,
         containerPort: props.port
       }],
@@ -118,31 +141,15 @@ export class WebEcsService extends pulumi.ComponentResource {
         subnets: props.privateSubnets
       }
     }, {
-      ignoreChanges: ['taskDefinition', 'desiredCount']
+      ignoreChanges: ['taskDefinition', 'desiredCount'],
+      dependsOn: [targetGroup]
     });
 
-    const targetGroup = new aws.alb.TargetGroup("TargetGroup", {
-      port: props.port,
-      protocol: "HTTP",
-      targetType: "ip",
-      vpcId: props.vpcId,
-      healthCheck: {
-        timeout: 5,
-        protocol: "HTTP",
-        port: "traffic-port",
-        path: props.healthCheckPath,
-        matcher: "200-399",
-        interval: props.healthCheckInterval ?? 2,
-        unhealthyThreshold: 3,
-        healthyThreshold: props.healthCheckHealthyThreshold ?? 2,
-      }
-    });
-
-    const listenerRule = new aws.alb.ListenerRule("ListenerRule", {
+    const listenerRule = new aws.alb.ListenerRule(`${props.name}ListenerRule`, {
       listenerArn: props.listenerArn,
       actions: [{
         type: "forward",
-        targetGroupArn: props.targetGroupArn
+        targetGroupArn: targetGroup.arn
       }],
       conditions: [
         {
@@ -156,6 +163,7 @@ export class WebEcsService extends pulumi.ComponentResource {
           }
         }
       ]
-    })
+    });
+    this.listenerRule = listenerRule;
   }
 }

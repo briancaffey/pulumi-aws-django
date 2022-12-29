@@ -18,16 +18,17 @@ interface AdHocBaseEnvComponentProps {
  */
 export class AdHocBaseEnvComponent extends pulumi.ComponentResource {
 
-  public vpc: awsx.ec2.Vpc;
-  public alb: aws.alb.LoadBalancer;
-  public appSecurityGroup: aws.ec2.SecurityGroup;
-  public albSecurityGroup: aws.ec2.SecurityGroup;
-  public serviceDiscoveryNamespace: aws.servicediscovery.PrivateDnsNamespace;
-  public databaseInstance: aws.rds.Instance;
-  public assetsBucket: aws.s3.Bucket;
-  public domainName: string;
-  public listener: aws.alb.Listener;
-  public stackName: string;
+  public readonly vpc: awsx.ec2.Vpc;
+  public readonly alb: aws.alb.LoadBalancer;
+  public readonly appSecurityGroup: aws.ec2.SecurityGroup;
+  public readonly albSecurityGroup: aws.ec2.SecurityGroup;
+  public readonly serviceDiscoveryNamespace: aws.servicediscovery.PrivateDnsNamespace;
+  public readonly databaseInstance: aws.rds.Instance;
+  public readonly assetsBucket: aws.s3.Bucket;
+  public readonly domainName: string;
+  public readonly listener: aws.alb.Listener;
+  public readonly stackName: string;
+  public readonly bastionHostInstanceId?: pulumi.Output<string>;
 
   /**
    * Creates base resources to support ad hoc application environments
@@ -171,10 +172,11 @@ export class AdHocBaseEnvComponent extends pulumi.ComponentResource {
     this.databaseInstance = rdsResources.databaseInstance;
 
     // BastionHost
-    const bastionHost = new BastionHostResources("BastionHostResources", {
-      appSgId: appSecurityGroup.arn,
-      rdsAddress: rdsResources.databaseInstance.address,
-      privateSubnet: vpc.privateSubnetIds[0]
-    });
+    // const bastionHost = new BastionHostResources("BastionHostResources", {
+    //   appSgId: appSecurityGroup.id,
+    //   rdsAddress: rdsResources.databaseInstance.address,
+    //   privateSubnet: vpc.privateSubnetIds[0]
+    // });
+    // this.bastionHostInstanceId = bastionHost.instanceId;
   }
 }

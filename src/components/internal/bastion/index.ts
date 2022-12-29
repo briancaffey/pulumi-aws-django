@@ -3,9 +3,9 @@ import * as pulumi from "@pulumi/pulumi";
 
 interface BastionHostResourcesProps {
   instanceType?: string;
-  rdsAddress: pulumi.Input<string>;
-  appSgId: pulumi.Input<string>;
-  privateSubnet: pulumi.Input<string>;
+  rdsAddress: pulumi.Output<string>;
+  appSgId: pulumi.Output<string>;
+  privateSubnet: pulumi.Output<string>;
 }
 
 export class BastionHostResources extends pulumi.ComponentResource {
@@ -74,8 +74,8 @@ export class BastionHostResources extends pulumi.ComponentResource {
 
     // instance profile
     const instanceProfile = new aws.iam.InstanceProfile("BastionHostInstanceProfile", {
-      role: bastionHostRole.arn,
-      name: `${stackName}-bastion-instance-profile`
+      // role: bastionHostRole.arn,
+      name: pulumi.interpolate `${stackName}BastionInstanceProfile`
     });
 
     // bastion host user data string
@@ -119,7 +119,7 @@ runcmd:
       associatePublicIpAddress: true,
       instanceType: props.instanceType ?? 't2.micro',
       userDataReplaceOnChange: true,
-      iamInstanceProfile: instanceProfile.name,
+      // iamInstanceProfile: pulumi.interpolate `${instanceProfile.arn}`,
       vpcSecurityGroupIds: [props.appSgId],
       subnetId: props.privateSubnet,
       userData: bastionHostUserData,

@@ -5,7 +5,6 @@ import { Input } from "@pulumi/pulumi";
 interface RedisEcsResourcesProps {
   name: string;
   image: string;
-  privateSubnets: string[];
   port: number;
   cpu: string;
   memory: string;
@@ -14,11 +13,12 @@ interface RedisEcsResourcesProps {
   logRetentionInDays: number;
   containerName: string;
   // https://stackoverflow.com/a/62562828/6084948
+  privateSubnets: Input<string[]>;
   ecsClusterId: Input<string>;
   executionRoleArn: Input<string>;
   taskRoleArn: Input<string>;
-  appSgId: string;
-  serviceDiscoveryNamespaceId: string;
+  appSgId: Input<string>;
+  serviceDiscoveryNamespaceId: Input<string>;
 }
 
 export class RedisEcsResources extends pulumi.ComponentResource {
@@ -35,19 +35,19 @@ export class RedisEcsResources extends pulumi.ComponentResource {
     super("pulumi-contrib:components:RedisEcsResources", name, props, opts);
 
     // aws cloudwatch log group
-    const cwLogGroup = new aws.cloudwatch.LogGroup("logGroup", {
+    const cwLogGroup = new aws.cloudwatch.LogGroup(`${props.name}logGroup`, {
       name: props.logGroupName,
       retentionInDays: props.logRetentionInDays
     });
 
     // aws cloudwatch log stream
-    const cwLogStream = new aws.cloudwatch.LogStream("logStream", {
+    const cwLogStream = new aws.cloudwatch.LogStream(`${props.name}LogStream`, {
       logGroupName: cwLogGroup.name,
       name: props.logStreamPrefix
     });
 
     // aws ecs task definition
-    const taskDefinition = new aws.ecs.TaskDefinition("taskDefinition", {
+    const taskDefinition = new aws.ecs.TaskDefinition(`${props.name}TaskDefinition`, {
       containerDefinitions: JSON.stringify([
         {
           name: props.name,
@@ -57,7 +57,7 @@ export class RedisEcsResources extends pulumi.ComponentResource {
             logDriver: "awslogs",
             options: {
               "awslogs-group": props.logGroupName,
-              "awslogs-region": region.name,
+              "awslogs-region": "us-east-1",
               "awslogs-stream-prefix": props.logStreamPrefix
             }
           },

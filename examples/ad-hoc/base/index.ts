@@ -9,8 +9,7 @@ const adHocBaseEnv = new AdHocBaseEnvComponent('myAdHocEnv', {
 
 // should I be exporting the vpc component from awsx, or just the vpcid and read it in another stack?
 export const vpcId = adHocBaseEnv.vpc.vpcId;
-export const privateSubnets = adHocBaseEnv.vpc.privateSubnetIds;
-export const publicSubnets = adHocBaseEnv.vpc.publicSubnetIds;
+export const privateSubnetIds = adHocBaseEnv.vpc.privateSubnetIds;
 export const appSgId = adHocBaseEnv.appSecurityGroup.id;
 export const albSgId = adHocBaseEnv.albSecurityGroup.id;
 export const listenerArn = adHocBaseEnv.listener.arn;
@@ -20,3 +19,4 @@ export const serviceDiscoveryNamespaceId = adHocBaseEnv.serviceDiscoveryNamespac
 export const rdsAddress = adHocBaseEnv.databaseInstance.address;
 export const domainName = adHocBaseEnv.domainName;
 export const baseStackname = adHocBaseEnv.stackName;
+export const bastionHostInstanceId = adHocBaseEnv.bastionHostInstanceId;
