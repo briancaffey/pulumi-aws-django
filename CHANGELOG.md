@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.5.0](https://github.com/briancaffey/pulumi-aws-django/compare/v1.4.0...v1.5.0) (2022-12-29)
+
+
+### Features
+
+* **inputs-ouputs:** fix issues with pulumi inputs and outputs ([6dc7bb5](https://github.com/briancaffey/pulumi-aws-django/commit/6dc7bb515669c5ce8ddd3e1e4e8ea44ec658c772))
+
 ## [1.4.0](https://github.com/briancaffey/pulumi-aws-django/compare/v1.3.0...v1.4.0) (2022-12-28)
 
 
