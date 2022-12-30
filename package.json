@@ -1,6 +1,6 @@
 {
   "name": "pulumi-aws-django",
-  "version": "1.6.0",
+  "version": "1.7.0",
   "main": "bin/index.js",
   "typings": "bin/index.d.ts",
   "devDependencies": {
