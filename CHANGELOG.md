@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.6.0](https://github.com/briancaffey/pulumi-aws-django/compare/v1.5.0...v1.6.0) (2022-12-30)
+
+
+### Features
+
+* **environment:** fix all issues with environment variables ([8d41b6f](https://github.com/briancaffey/pulumi-aws-django/commit/8d41b6fb6eaefb3b01de8674d21d4d9ffaa77a78))
+
 ## [1.5.0](https://github.com/briancaffey/pulumi-aws-django/compare/v1.4.0...v1.5.0) (2022-12-29)
 
 
