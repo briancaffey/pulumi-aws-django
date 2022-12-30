@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.7.1](https://github.com/briancaffey/pulumi-aws-django/compare/v1.7.0...v1.7.1) (2022-12-30)
+
+
+### Bug Fixes
+
+* **protocol:** add protocol to default tg health check ([7798a7b](https://github.com/briancaffey/pulumi-aws-django/commit/7798a7b0bcea1533a4addf478c401d9a7032593b))
+
 ## [1.7.0](https://github.com/briancaffey/pulumi-aws-django/compare/v1.6.0...v1.7.0) (2022-12-30)
 
 
