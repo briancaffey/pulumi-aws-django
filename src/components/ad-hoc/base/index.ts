@@ -47,6 +47,8 @@ export class AdHocBaseEnvComponent extends pulumi.ComponentResource {
     const vpc = new awsx.ec2.Vpc(stackName, {
       cidrBlock: "10.0.0.0/16",
       numberOfAvailabilityZones: 2,
+      enableDnsHostnames: true,
+      enableDnsSupport: true
     });
     this.vpc = vpc;
 
@@ -89,6 +91,12 @@ export class AdHocBaseEnvComponent extends pulumi.ComponentResource {
         toPort: 0,
         protocol: "-1",
         securityGroups: [albSecurityGroup.id],
+      },{
+        description: "Allow traffic from this SG",
+        fromPort: 0,
+        toPort: 0,
+        protocol: "-1",
+        self: true,
       }],
       egress: [{
         description: "Allow all outbound traffic",
@@ -96,6 +104,12 @@ export class AdHocBaseEnvComponent extends pulumi.ComponentResource {
         toPort: 0,
         protocol: "-1",
         cidrBlocks: ["0.0.0.0/0"],
+      },{
+        description: "Allow all outbound to this SG",
+        fromPort: 0,
+        toPort: 0,
+        protocol: "-1",
+        self: true
       }],
     });
     this.appSecurityGroup = appSecurityGroup;

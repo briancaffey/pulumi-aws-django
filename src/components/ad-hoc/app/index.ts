@@ -1,10 +1,10 @@
 import * as aws from "@pulumi/aws"
 import * as pulumi from "@pulumi/pulumi";
 import { IamResources } from "../../internal/iam/ecs";
-// import { RedisEcsResources } from "../../internal/ecs/redis";
+import { RedisEcsResources } from "../../internal/ecs/redis";
 import { WebEcsService } from "../../internal/ecs/web";
-// import { ManagementCommandTask } from "../../internal/ecs/managementCommand";
-// import { WorkerEcsService } from "../../internal/ecs/celery";
+import { ManagementCommandTask } from "../../internal/ecs/managementCommand";
+import { WorkerEcsService } from "../../internal/ecs/celery";
 
 /**
  * The inputs needed for setting up and ad hoc environment
@@ -46,8 +46,9 @@ export class AdHocAppComponent extends pulumi.ComponentResource {
 
     // ECR images
     // latest tags are only used for the initial deployment of the ad hoc application environment
+    // TODO: lookup from ecr.getRepo / ecr.getImage?
     const backendImage = `${accountId}.dkr.ecr.us-east-1.amazonaws.com/backend`;
-    // const frontendImage = `${accountId}.dkr.ecr.us-east-1.amazonaws.com/frontend`;
+    const frontendImage = `${accountId}.dkr.ecr.us-east-1.amazonaws.com/frontend`;
 
     // ECS
     // https://www.pulumi.com/registry/packages/aws/api-docs/ecs/cluster/
@@ -75,31 +76,23 @@ export class AdHocAppComponent extends pulumi.ComponentResource {
     // // TODO: this seems like a weird workaround (`as unknown as string`)
     // const s3BucketName = s3Bucket.bucket as unknown as string;
 
-    // redis service host
-
-    // postgres service host
-
-    // postgres name
-
-    // django settings module
-
-    // domain name
-
-    // frontend url
-
     // env vars to use in backend container
-    const envVars: { [key: string]: pulumi.Output<string> | string }[] = [
+    // https://github.com/pulumi/examples/blob/master/aws-ts-airflow/index.ts#L61
+    // https://gist.github.com/AaronFriel/fa4d88781f339c2c26791a08b9c50c0e
+    const hosts = pulumi.all([props.rdsAddress, props.baseStackName, props.domainName]);
+
+    const envVars = hosts.apply(([pgHost, baseStackName, domainName]) => [
       {
         name: "S3_BUCKET_NAME",
         value: "replace-with-bucket-name",
       },
       {
         name: "REDIS_SERVICE_HOST",
-        value: pulumi.interpolate `${stackName}-redis.${props.baseStackName}-sd-ns`
+        value: `${stackName}-redis.${baseStackName}-sd-ns`
       },
       {
         name: "POSTGRES_SERVICE_HOST",
-        value: pulumi.interpolate `${props.rdsAddress}`,
+        value: pgHost,
       },
       {
         name: "POSTGRES_NAME",
@@ -111,29 +104,21 @@ export class AdHocAppComponent extends pulumi.ComponentResource {
       },
       {
         name: "DOMAIN_NAME",
-        value: pulumi.interpolate `${props.domainName}`
+        value: domainName
       },
       {
         name: "FRONTEND_URL",
-        value: pulumi.interpolate `https://${stackName}.${props.domainName}`,
+        value: `https://${stackName}.${domainName}`,
       },
       {
         name: "DB_SECRET_NAME",
         value: "DB_SECRET_NAME",
+      },
+      {
+        name: "BASE_STACK_NAME",
+        value: baseStackName
       }
-    ];
-
-    // TODO: we could also define env vars this way and then transform to the name/value format using Object.entries
-    // const envVars: pulumi.Input<{ [key: string]: pulumi.Output<string> | string }> = {
-    //   S3_BUCKET_NAME: "replace-with-bucket-name",
-    //   REDIS_SERVICE_HOST: `${stackName}-redis.${props.baseStackName}-sd-ns`,
-    //   POSTGRES_SERVICE_HOST: `${props.rdsAddress}`,
-    //   POSTGRES_NAME: `${stackName}-db`,
-    //   DJANGO_SETTINGS_MODULE: "backend.settings.production",
-    //   DOMAIN_NAME: `${props.domainName}`,
-    //   FRONTEND_URL: `https://${stackName}.${props.domainName}`,
-    //   DB_SECRET_NAME: "DB_SECRET_NAME"
-    // }
+    ]);
 
     // IAM Roles
     const iamResources = new IamResources("IamResources", {});
@@ -154,26 +139,23 @@ export class AdHocAppComponent extends pulumi.ComponentResource {
     this.url = `alpha.${props.domainName}`;
 
     // Redis
-    // const redis = new RedisEcsResources("RedisEcsResources", {
-    //   name: "redis",
-    //   image: "redis:5.0.3-alpine",
-    //   privateSubnets: props.privateSubnets,
-    //   port: 6379,
-    //   memory: "2048",
-    //   cpu: "1024",
-    //   logGroupName: `/ecs/${stackName}/redis`,
-    //   logStreamPrefix: "redis",
-    //   ecsClusterId: cluster.id,
-    //   appSgId: props.appSgId,
-    //   // not able to process Output<string> as string here
-    //   // role ARNs are wrapped with Input, Input<string> on the interface
-    //   // https://stackoverflow.com/a/62562828/6084948
-    //   executionRoleArn: iamResources.taskExecutionRole.arn,
-    //   taskRoleArn: iamResources.ecsTaskRole.arn,
-    //   logRetentionInDays: 1,
-    //   serviceDiscoveryNamespaceId: props.serviceDiscoveryNamespaceId,
-    //   containerName: "redis"
-    // });
+    const redis = new RedisEcsResources("RedisEcsResources", {
+      name: "redis",
+      image: "redis:5.0.3-alpine",
+      privateSubnets: props.privateSubnets,
+      port: 6379,
+      memory: "2048",
+      cpu: "1024",
+      logGroupName: `/ecs/${stackName}/redis`,
+      logStreamPrefix: "redis",
+      ecsClusterId: cluster.id,
+      appSgId: props.appSgId,
+      executionRoleArn: iamResources.taskExecutionRole.arn,
+      taskRoleArn: iamResources.ecsTaskRole.arn,
+      logRetentionInDays: 1,
+      serviceDiscoveryNamespaceId: props.serviceDiscoveryNamespaceId,
+      containerName: "redis"
+    });
 
     // API
     const apiService = new WebEcsService("ApiWebService", {
@@ -206,79 +188,82 @@ export class AdHocAppComponent extends pulumi.ComponentResource {
 
     // Frontend Service
     // API
-    // const frontendService = new WebEcsService("FrontendWebService", {
-    //   // defined locally
-    //   name: "frontend",
-    //   command: ["nginx", "-g", "daemon off;"],
-    //   logRetentionInDays: 1,
-    //   port: 80,
-    //   memory: "2048",
-    //   cpu: "1024",
-    //   // logs
-    //   logGroupName: `/ecs/${stackName}/frontend`,
-    //   logStreamPrefix: "frontend",
-    //   // health check
-    //   healthCheckPath: "/",
-    //   // alb
-    //   listenerArn: props.listenerArn,
-    //   pathPatterns: ["/*"],
-    //   hostName,
-    //   // base stack
-    //   appSgId: props.appSgId,
-    //   privateSubnets: props.privateSubnets,
-    //   vpcId: props.vpcId,
-    //   // pulumi Inputs from this stack
-    //   image: frontendImage,
-    //   ecsClusterId: cluster.id,
-    //   executionRoleArn: iamResources.taskExecutionRole.arn,
-    //   taskRoleArn: iamResources.ecsTaskRole.arn,
-    // }, {
-    //   // this ensures that the priority of the listener rule for the api service is higher than the frontend service
-    //   dependsOn: [apiService.listenerRule]
-    // });
+    const frontendService = new WebEcsService("FrontendWebService", {
+      // defined locally
+      name: "frontend",
+      command: ["nginx", "-g", "daemon off;"],
+      logRetentionInDays: 1,
+      port: 80,
+      memory: "2048",
+      cpu: "1024",
+      // logs
+      logGroupName: `/ecs/${stackName}/frontend`,
+      logStreamPrefix: "frontend",
+      // health check
+      healthCheckPath: "/",
+      // alb
+      listenerArn: props.listenerArn,
+      pathPatterns: ["/*"],
+      hostName,
+      // base stack
+      appSgId: props.appSgId,
+      privateSubnets: props.privateSubnets,
+      vpcId: props.vpcId,
+      // pulumi Inputs from this stack
+      image: frontendImage,
+      ecsClusterId: cluster.id,
+      executionRoleArn: iamResources.taskExecutionRole.arn,
+      taskRoleArn: iamResources.ecsTaskRole.arn,
+    }, {
+      // this ensures that the priority of the listener rule for the api service is higher than the frontend service
+      dependsOn: [apiService.listenerRule]
+    });
 
     // Celery Default Worker
-    // const workerService = new WorkerEcsService("WorkerService", {
-    //   // defined locally
-    //   name: "default",
-    //   command: ["celery", "--app=backend.celery_app:app", "worker", "--loglevel=INFO", "-Q", "default"],
-    //   envVars,
-    //   logRetentionInDays: 1,
-    //   cpu: "1024",
-    //   memory: "2048",
-    //   logGroupName: `/ecs/${stackName}/celery-default-worker`,
-    //   logStreamPrefix: "celery-default-worker",
-    //   // from base stack
-    //   appSgId: props.appSgId,
-    //   privateSubnets: props.privateSubnets,
-    //   // pulumi Inputs from this stack
-    //   image: backendImage,
-    //   ecsClusterId: cluster.id,
-    //   executionRoleArn: iamResources.taskExecutionRole.arn,
-    //   taskRoleArn: iamResources.ecsTaskRole.arn,
-    // });
+    const workerService = new WorkerEcsService("WorkerService", {
+      // defined locally
+      name: "default",
+      command: ["celery", "--app=backend.celery_app:app", "worker", "--loglevel=INFO", "-Q", "default"],
+      envVars,
+      logRetentionInDays: 1,
+      cpu: "1024",
+      memory: "2048",
+      logGroupName: `/ecs/${stackName}/celery-default-worker`,
+      logStreamPrefix: "celery-default-worker",
+      // from base stack
+      appSgId: props.appSgId,
+      privateSubnets: props.privateSubnets,
+      // pulumi Inputs from this stack
+      image: backendImage,
+      ecsClusterId: cluster.id,
+      executionRoleArn: iamResources.taskExecutionRole.arn,
+      taskRoleArn: iamResources.ecsTaskRole.arn,
+    });
 
     // TODO: add this
     // Celery beat
 
     // backend update task
-    // const backendUpdateTask = new ManagementCommandTask("BackendUpdateTask", {
-    //   name: "backendUpdate",
-    //   command: ["python", "manage.py", "pre_update"],
-    //   appSgId: props.appSgId,
-    //   containerName: "backendUpdate",
-    //   cpu: "1024",
-    //   memory: "2048",
-    //   ecsClusterId: cluster.id,
-    //   image: backendImage,
-    //   executionRoleArn: iamResources.taskExecutionRole.arn,
-    //   taskRoleArn: iamResources.ecsTaskRole.arn,
-    //   envVars,
-    //   logGroupName: `/ecs/${stackName}/backendUpdate`,
-    //   logRetentionInDays: 1,
-    //   logStreamPrefix: "backendUpdate",
-    //   privateSubnets: props.privateSubnets,
-    // });
-    // this.backendUpdateScript = backendUpdateTask.executionScript;
+    const backendUpdateTask = new ManagementCommandTask("BackendUpdateTask", {
+      // defined locally
+      name: "backendUpdate",
+      command: ["python", "manage.py", "pre_update"],
+      envVars,
+      containerName: "backendUpdate",
+      cpu: "1024",
+      memory: "2048",
+      logGroupName: `/ecs/${stackName}/backendUpdate`,
+      logRetentionInDays: 1,
+      logStreamPrefix: "backendUpdate",
+      // from base stack
+      appSgId: props.appSgId,
+      privateSubnets: props.privateSubnets,
+      // pulumi Inputs from this stack
+      ecsClusterId: cluster.id,
+      image: backendImage,
+      executionRoleArn: iamResources.taskExecutionRole.arn,
+      taskRoleArn: iamResources.ecsTaskRole.arn,
+    });
+    this.backendUpdateScript = backendUpdateTask.executionScript;
   }
 }

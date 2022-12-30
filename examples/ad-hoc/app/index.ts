@@ -15,7 +15,7 @@ const albDnsName = stackReference.getOutput("albDnsName") as pulumi.Output<strin
 const serviceDiscoveryNamespaceId = stackReference.getOutput("serviceDiscoveryNamespaceId") as pulumi.Output<string>;
 const rdsAddress = stackReference.getOutput("rdsAddress") as pulumi.Output<string>;
 const domainName = stackReference.getOutput("domainName") as pulumi.Output<string>;
-const baseStackName = stackReference.getOutput("stackName") as pulumi.Output<string>;
+const baseStackName = stackReference.getOutput("baseStackName") as pulumi.Output<string>;
 
 // ad hoc app env
 const adHocAppComponent = new AdHocAppComponent("AdHocAppComponent", {

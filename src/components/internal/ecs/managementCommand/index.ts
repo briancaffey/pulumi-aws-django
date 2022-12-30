@@ -6,7 +6,7 @@ interface ManagementCommandTaskProps {
   // defined locally
   name: string;
   command: string[];
-  envVars: { [key: string]: pulumi.Input<string> | string }[];
+  envVars: pulumi.Output<{ "name": string, "value": string }[]>;
   logRetentionInDays: number;
   cpu: string;
   memory: string;
@@ -50,10 +50,12 @@ export class ManagementCommandTask extends pulumi.ComponentResource {
 
     // aws ecs task definition
     const taskDefinition = new aws.ecs.TaskDefinition(`${props.name}TaskDefinition`, {
-      containerDefinitions: JSON.stringify([
+      containerDefinitions: pulumi.jsonStringify([
         {
           name: props.name,
           image: props.image,
+          environment: props.envVars,
+          command: props.command,
           essential: true,
           logConfiguration: {
             logDriver: "awslogs",
@@ -75,17 +77,13 @@ export class ManagementCommandTask extends pulumi.ComponentResource {
     });
 
     // this script is called once on initial setup from GitHub Actions
-    const executionScript = pulumi.interpolate`
+    const executionScript = pulumi.interpolate`#!/bin/bash
 START_TIME=$(date +%s000)
-
 TASK_ID=$(aws ecs run-task --cluster ${props.ecsClusterId} --task-definition ${taskDefinition.arn} --launch-type FARGATE --network-configuration "awsvpcConfiguration={subnets=[${props.privateSubnets.apply(x => x.join(","))}],securityGroups=[${props.appSgId}],assignPublicIp=ENABLED}" | jq -r '.tasks[0].taskArn')
-
 aws ecs wait tasks-stopped --tasks $TASK_ID --cluster ${props.ecsClusterId}
-
 END_TIME=$(date +%s000)
-
 aws logs get-log-events --log-group-name ${props.logGroupName} --log-stream-name ${props.logStreamPrefix}/${props.containerName}/\${TASK_ID##*/} --start-time $START_TIME --end-time $END_TIME | jq -r '.events[].message'
-    `;
+`;
     this.executionScript = executionScript;
   }
 }

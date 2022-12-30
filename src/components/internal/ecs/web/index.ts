@@ -7,7 +7,7 @@ interface WebEcsServiceProps {
   name: string;
   command: Input<string[]>,
   // envVars?: pulumi.Input<{ "name": string, "value": pulumi.Output<string> | string }[]>;
-  envVars?: { [key: string]: pulumi.Input<string> | string }[];
+  envVars?: pulumi.Output<{ "name": string, "value": string }[]>;
   logRetentionInDays: number;
   port: number;
   cpu: string;
@@ -61,7 +61,7 @@ export class WebEcsService extends pulumi.ComponentResource {
 
     // aws ecs task definition
     const taskDefinition = new aws.ecs.TaskDefinition(`${props.name}TaskDefinition`, {
-      containerDefinitions: JSON.stringify([
+      containerDefinitions: pulumi.jsonStringify([
         {
           name: props.name,
           image: props.image,

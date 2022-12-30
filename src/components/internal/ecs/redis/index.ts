@@ -88,7 +88,8 @@ export class RedisEcsResources extends pulumi.ComponentResource {
         dnsRecords: [{
           ttl: 10,
           type: "A"
-        }]
+        }],
+        routingPolicy: "MULTIVALUE"
       },
       healthCheckCustomConfig: {
         failureThreshold: 1
