@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.8.0](https://github.com/briancaffey/pulumi-aws-django/compare/v1.7.2...v1.8.0) (2022-12-30)
+
+
+### Features
+
+* **tags:** add autotagging to ad hoc base and app components ([d31d3cd](https://github.com/briancaffey/pulumi-aws-django/commit/d31d3cd4626709cbbfa2362683479cb58d825741))
+
 ## [1.7.2](https://github.com/briancaffey/pulumi-aws-django/compare/v1.7.1...v1.7.2) (2022-12-30)
 
 
