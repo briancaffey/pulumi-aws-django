@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.7.0](https://github.com/briancaffey/pulumi-aws-django/compare/v1.6.0...v1.7.0) (2022-12-30)
+
+
+### Features
+
+* **s3:** add assets bucket to app stack from base stack ([4ac798c](https://github.com/briancaffey/pulumi-aws-django/commit/4ac798c2b97cb5453a919c21fddf317f61e90962))
+
 ## [1.6.0](https://github.com/briancaffey/pulumi-aws-django/compare/v1.5.0...v1.6.0) (2022-12-30)
 
 
