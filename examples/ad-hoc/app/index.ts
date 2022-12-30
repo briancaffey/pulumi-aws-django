@@ -7,6 +7,7 @@ const environment = process.env.PULUMI_ENVIRONMENT || "dev";
 const stackReference = new pulumi.StackReference(`${org}/ad-hoc-base/${environment}`)
 
 const vpcId = stackReference.getOutput("vpcId") as pulumi.Output<string>;
+const assetsBucketName = stackReference.getOutput("assetsBucketName") as pulumi.Output<string>;
 const privateSubnets = stackReference.getOutput("privateSubnetIds") as pulumi.Output<string[]>;
 const appSgId = stackReference.getOutput("appSgId") as pulumi.Output<string>;
 const albSgId = stackReference.getOutput("albSgId") as pulumi.Output<string>;
@@ -20,6 +21,7 @@ const baseStackName = stackReference.getOutput("baseStackName") as pulumi.Output
 // ad hoc app env
 const adHocAppComponent = new AdHocAppComponent("AdHocAppComponent", {
   vpcId,
+  assetsBucketName,
   privateSubnets,
   appSgId,
   albSgId,

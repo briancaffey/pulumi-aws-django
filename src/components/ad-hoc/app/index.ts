@@ -11,6 +11,7 @@ import { WorkerEcsService } from "../../internal/ecs/celery";
  */
 interface AdHocAppComponentProps {
   vpcId: pulumi.Output<string>;
+  assetsBucketName: pulumi.Output<string>;
   privateSubnets: pulumi.Output<string[]>;
   appSgId: pulumi.Output<string>;
   albSgId: pulumi.Output<string>;
@@ -23,8 +24,8 @@ interface AdHocAppComponentProps {
 }
 
 /**
- * Base resources for Ad Hoc environments.
- * Includes networking resources (VPC, SG, ALB, CloudMap), RDS and S3
+ * Resource for ad hoc app environment
+ * Includes ECS Resources (Redis, API, Frontend, Celery, Beat, ECS Tasks, Route53 Records)
  */
 export class AdHocAppComponent extends pulumi.ComponentResource {
   public readonly url: string;
@@ -41,7 +42,7 @@ export class AdHocAppComponent extends pulumi.ComponentResource {
 
     const stackName = pulumi.getStack();
     const hostName = props.domainName.apply(x => `${stackName}.${x}`)
-    // const current = aws.getCallerIdentity({});
+
     const accountId = process.env.AWS_ACCOUNT_ID;
 
     // ECR images
@@ -67,24 +68,23 @@ export class AdHocAppComponent extends pulumi.ComponentResource {
       }],
     });
 
-    // s3
-    // const bucketName = props.domainName as pulumi.Output<string>;
-    // const s3Bucket = new aws.s3.Bucket("AssetsBucket", {
-    //   forceDestroy: true,
-    //   bucket: `${bucketName.apply(x => x.replace(".", "-"))}-${props.baseStackName}-bucket`
-    // });
-    // // TODO: this seems like a weird workaround (`as unknown as string`)
-    // const s3BucketName = s3Bucket.bucket as unknown as string;
+    // S3
+    // TODO: add optional per-ad hoc environment S3 bucket to use instead of shared S3 bucket from base stack
 
     // env vars to use in backend container
     // https://github.com/pulumi/examples/blob/master/aws-ts-airflow/index.ts#L61
     // https://gist.github.com/AaronFriel/fa4d88781f339c2c26791a08b9c50c0e
-    const hosts = pulumi.all([props.rdsAddress, props.baseStackName, props.domainName]);
+    const hosts = pulumi.all([
+      props.rdsAddress,
+      props.baseStackName,
+      props.domainName,
+      props.assetsBucketName
+    ]);
 
-    const envVars = hosts.apply(([pgHost, baseStackName, domainName]) => [
+    const envVars = hosts.apply(([pgHost, baseStackName, domainName, assetsBucketName]) => [
       {
         name: "S3_BUCKET_NAME",
-        value: "replace-with-bucket-name",
+        value: assetsBucketName,
       },
       {
         name: "REDIS_SERVICE_HOST",
