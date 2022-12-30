@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.9.0](https://github.com/briancaffey/pulumi-aws-django/compare/v1.8.0...v1.9.0) (2022-12-30)
+
+
+### Features
+
+* **bastion:** add bastion host and related resources ([fec4410](https://github.com/briancaffey/pulumi-aws-django/commit/fec44102dd7066e1afcd64b8bf1a9369898596ef))
+
 ## [1.8.0](https://github.com/briancaffey/pulumi-aws-django/compare/v1.7.2...v1.8.0) (2022-12-30)
 
 
