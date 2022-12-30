@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.7.2](https://github.com/briancaffey/pulumi-aws-django/compare/v1.7.1...v1.7.2) (2022-12-30)
+
+
+### Bug Fixes
+
+* **repo:** add root index.ts file that exposes components at top level ([b13c558](https://github.com/briancaffey/pulumi-aws-django/commit/b13c5583dceea4dcf2ba5c82cb00ac0146a87ec2))
+
 ## [1.7.1](https://github.com/briancaffey/pulumi-aws-django/compare/v1.7.0...v1.7.1) (2022-12-30)
 
 
