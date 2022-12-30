@@ -128,6 +128,7 @@ export class AdHocBaseEnvComponent extends pulumi.ComponentResource {
       targetType: "instance",
       protocol: "HTTP",
       healthCheck: {
+        protocol: "HTTP",
         interval: 300,
         path: "/api/health-check/",
         timeout: 120,
