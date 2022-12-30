@@ -10,6 +10,9 @@ ad-hoc-base-preview:	build
 ad-hoc-base-up:	build
 	pulumi -C examples/ad-hoc/base --non-interactive up --yes
 
+ad-hoc-base-refresh:	build
+	pulumi -C examples/ad-hoc/base --non-interactive refresh --yes
+
 ad-hoc-base-destroy:	build
 	pulumi -C examples/ad-hoc/base --stack dev --non-interactive destroy --yes
 

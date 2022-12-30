@@ -193,11 +193,11 @@ export class AdHocBaseEnvComponent extends pulumi.ComponentResource {
     this.databaseInstance = rdsResources.databaseInstance;
 
     // BastionHost
-    // const bastionHost = new BastionHostResources("BastionHostResources", {
-    //   appSgId: appSecurityGroup.id,
-    //   rdsAddress: rdsResources.databaseInstance.address,
-    //   privateSubnet: vpc.privateSubnetIds[0]
-    // });
-    // this.bastionHostInstanceId = bastionHost.instanceId;
+    const bastionHost = new BastionHostResources("BastionHostResources", {
+      appSgId: appSecurityGroup.id,
+      rdsAddress: rdsResources.databaseInstance.address,
+      privateSubnet: vpc.privateSubnetIds[0]
+    });
+    this.bastionHostInstanceId = bastionHost.instanceId;
   }
 }

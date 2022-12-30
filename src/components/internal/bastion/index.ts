@@ -9,12 +9,12 @@ interface BastionHostResourcesProps {
 }
 
 export class BastionHostResources extends pulumi.ComponentResource {
-  public readonly instanceId: pulumi.Output<string>;
+  public readonly instanceId?: pulumi.Output<string>;
 
   /**
-   * Creates a new static website hosted on AWS.
+   * Creates resources for a bastion host EC2 instance.
    * @param name The _unique_ name of the resource.
-   * @param props Props to pass to AdHocBaseEnv component
+   * @param props Props to pass to the BastionHostResources component
    * @param opts A bag of options that control this resource's behavior.
    */
   constructor(name: string, props: BastionHostResourcesProps, opts?: pulumi.ResourceOptions) {
@@ -55,7 +55,7 @@ export class BastionHostResources extends pulumi.ComponentResource {
     });
 
     // policy for BastionHostRole
-    new aws.iam.RolePolicy("BastionHostPolicy", {
+    const policy = new aws.iam.RolePolicy("BastionHostPolicy", {
       name: `${stackName}BastionHostPolicy`,
       role: bastionHostRole.id,
       policy: JSON.stringify({
@@ -74,8 +74,8 @@ export class BastionHostResources extends pulumi.ComponentResource {
 
     // instance profile
     const instanceProfile = new aws.iam.InstanceProfile("BastionHostInstanceProfile", {
-      // role: bastionHostRole.arn,
-      name: pulumi.interpolate `${stackName}BastionInstanceProfile`
+      role: bastionHostRole.name,
+      name: `${stackName}BastionInstanceProfile`
     });
 
     // bastion host user data string
@@ -119,7 +119,7 @@ runcmd:
       associatePublicIpAddress: true,
       instanceType: props.instanceType ?? 't2.micro',
       userDataReplaceOnChange: true,
-      // iamInstanceProfile: pulumi.interpolate `${instanceProfile.arn}`,
+      iamInstanceProfile: instanceProfile.name,
       vpcSecurityGroupIds: [props.appSgId],
       subnetId: props.privateSubnet,
       userData: bastionHostUserData,
