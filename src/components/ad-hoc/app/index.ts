@@ -5,6 +5,12 @@ import { RedisEcsResources } from "../../internal/ecs/redis";
 import { WebEcsService } from "../../internal/ecs/web";
 import { ManagementCommandTask } from "../../internal/ecs/managementCommand";
 import { WorkerEcsService } from "../../internal/ecs/celery";
+import { registerAutoTags } from "../../../util";
+
+// automatically tag all resources
+registerAutoTags({
+  "env": pulumi.getStack(),
+});
 
 /**
  * The inputs needed for setting up and ad hoc environment

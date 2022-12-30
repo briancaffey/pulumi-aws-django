@@ -3,6 +3,12 @@ import * as awsx from "@pulumi/awsx";
 import * as pulumi from "@pulumi/pulumi";
 import { RdsResources } from '../../internal/rds';
 import { BastionHostResources } from '../../internal/bastion';
+import { registerAutoTags } from "../../../util";
+
+// automatically tag all resources
+registerAutoTags({
+  "env": pulumi.getStack(),
+});
 
 /**
  * The inputs needed for setting up and ad hoc environment
