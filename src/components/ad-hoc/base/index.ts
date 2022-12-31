@@ -1,9 +1,11 @@
 import * as aws from "@pulumi/aws"
 import * as awsx from "@pulumi/awsx";
 import * as pulumi from "@pulumi/pulumi";
-import { RdsResources } from '../../internal/rds';
+import { AlbResources } from "../../internal/alb";
 import { BastionHostResources } from '../../internal/bastion';
+import { RdsResources } from '../../internal/rds';
 import { registerAutoTags } from "../../../util";
+import { SecurityGroupResources } from "../../internal/sg";
 
 // automatically tag all resources
 registerAutoTags({
@@ -47,7 +49,6 @@ export class AdHocBaseEnvComponent extends pulumi.ComponentResource {
 
     const stackName = pulumi.getStack();
     this.stackName = stackName;
-
     this.domainName = props.domainName;
 
     const vpc = new awsx.ec2.Vpc(stackName, {
@@ -55,149 +56,56 @@ export class AdHocBaseEnvComponent extends pulumi.ComponentResource {
       numberOfAvailabilityZones: 2,
       enableDnsHostnames: true,
       enableDnsSupport: true
-    });
+    }, { parent: this });
     this.vpc = vpc;
 
     const assetsBucket = new aws.s3.Bucket("assetsBucket", {
-      bucket: `${props.domainName.replace(".", "-")}-${stackName}-assets-bucket`
-    });
+      bucket: `${props.domainName.replace(".", "-")}-${stackName}-assets-bucket`,
+      forceDestroy: true
+    }, { parent: this });
     this.assetsBucket = assetsBucket;
 
-    const albSecurityGroup = new aws.ec2.SecurityGroup('AlbSecurityGroup', {
-      description: "Allow traffic from ALB",
-      vpcId: vpc.vpcId,
-      ingress: [{
-        description: "Port 80 Traffic",
-        fromPort: 80,
-        toPort: 80,
-        protocol: "tcp",
-        cidrBlocks: ["0.0.0.0/0"],
-      }, {
-        description: "Port 443 Traffic",
-        fromPort: 443,
-        toPort: 443,
-        protocol: "tcp",
-        cidrBlocks: ["0.0.0.0/0"],
-      }],
-      egress: [{
-        fromPort: 0,
-        toPort: 0,
-        protocol: "-1",
-        cidrBlocks: ["0.0.0.0/0"],
-      }],
-    });
-    this.albSecurityGroup = albSecurityGroup;
+    const securityGroupResources = new SecurityGroupResources("SecurityGroupResources", {
+      vpcId: vpc.vpcId
+    }, { parent: this });
+    this.appSecurityGroup = securityGroupResources.appSecurityGroup;
+    this.albSecurityGroup = securityGroupResources.albSecurityGroup;
 
-    const appSecurityGroup = new aws.ec2.SecurityGroup('AppSecurityGroup', {
-      description: "Allow traffic from ALB SG to apps",
-      vpcId: vpc.vpcId,
-      ingress: [{
-        description: "Port 80 Traffic",
-        fromPort: 0,
-        toPort: 0,
-        protocol: "-1",
-        securityGroups: [albSecurityGroup.id],
-      },{
-        description: "Allow traffic from this SG",
-        fromPort: 0,
-        toPort: 0,
-        protocol: "-1",
-        self: true,
-      }],
-      egress: [{
-        description: "Allow all outbound traffic",
-        fromPort: 0,
-        toPort: 0,
-        protocol: "-1",
-        cidrBlocks: ["0.0.0.0/0"],
-      },{
-        description: "Allow all outbound to this SG",
-        fromPort: 0,
-        toPort: 0,
-        protocol: "-1",
-        self: true
-      }],
-    });
-    this.appSecurityGroup = appSecurityGroup;
-
-    const loadBalancer = new aws.alb.LoadBalancer("LoadBalancer", {
-      internal: false,
-      loadBalancerType: "application",
-      securityGroups: [albSecurityGroup.id],
-      subnets: vpc.publicSubnetIds,
-    });
-    this.alb = loadBalancer;
-
-    new aws.alb.TargetGroup("DefaultTg", {
-      vpcId: vpc.vpc.id,
-      port: 80,
-      targetType: "instance",
-      protocol: "HTTP",
-      healthCheck: {
-        protocol: "HTTP",
-        interval: 300,
-        path: "/api/health-check/",
-        timeout: 120,
-        healthyThreshold: 2,
-        unhealthyThreshold: 3,
-        port: '80'
-      }
-    });
-
-    new aws.alb.Listener("HttpListener", {
-      loadBalancerArn: loadBalancer.arn,
-      port: 80,
-      protocol: "HTTP",
-      defaultActions: [{
-        type: "redirect",
-        redirect: {
-          port: "443",
-          protocol: "HTTPS",
-          statusCode: "HTTP_301",
-        },
-      }]
-    });
-
-    const httpsListener = new aws.alb.Listener("HttpsListener", {
-      loadBalancerArn: loadBalancer.arn,
-      port: 443,
-      protocol: "HTTPS",
+    // ALB resources (Load Balancer, Default Target Group, HTTP and HTTPS Listener)
+    const loadBalancerResources = new AlbResources("AlbResources", {
+      albSgId: securityGroupResources.albSecurityGroup.id,
       certificateArn: props.certificateArn,
-      defaultActions: [{
-          type: "fixed-response",
-          fixedResponse: {
-              contentType: "text/plain",
-              messageBody: "Fixed response content",
-              statusCode: "200",
-          },
-      }],
-    });
-    this.listener = httpsListener;
+      publicSubnetIds: vpc.publicSubnetIds,
+      vpcId: vpc.vpcId,
+    }, { parent: this });
+    this.alb = loadBalancerResources.alb;
+    this.listener = loadBalancerResources.listener;
 
-    const serviceDiscoveryPrivateDnsNamespace = new aws.servicediscovery.PrivateDnsNamespace(
-      "PrivateDnsNamespace", {
-        description: "private dns namespace for ad hoc environment",
-        vpc: vpc.vpc.id,
-        name: `${stackName}-sd-ns`
-      }
-    );
-    this.serviceDiscoveryNamespace = serviceDiscoveryPrivateDnsNamespace;
+    // CloudMap service discovery is only needed in ad hoc environments
+    // It is needed to support running redis in our ECS cluster
+    const sdNameSpace = new aws.servicediscovery.PrivateDnsNamespace("PrivateDnsNamespace", {
+      description: "private dns namespace for ad hoc environment",
+      vpc: vpc.vpcId,
+      name: `${stackName}-sd-ns`
+    }, { parent: this });
+    this.serviceDiscoveryNamespace = sdNameSpace;
 
     // RDS
     const rdsResources = new RdsResources("RdsResources", {
-      appSecurityGroup: appSecurityGroup,
+      appSgId: securityGroupResources.appSecurityGroup.id,
       dbSecretName: "DB_SECRET_NAME",
       port: 5432,
-      vpc: vpc
-    });
+      vpcId: vpc.vpcId,
+      privateSubnetIds: vpc.privateSubnetIds
+    }, { parent: this });
     this.databaseInstance = rdsResources.databaseInstance;
 
     // BastionHost
     const bastionHost = new BastionHostResources("BastionHostResources", {
-      appSgId: appSecurityGroup.id,
+      appSgId: securityGroupResources.appSecurityGroup.id,
       rdsAddress: rdsResources.databaseInstance.address,
       privateSubnet: vpc.privateSubnetIds[0]
-    });
+    }, { parent: this });
     this.bastionHostInstanceId = bastionHost.instanceId;
   }
 }

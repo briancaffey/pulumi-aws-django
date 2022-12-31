@@ -1,10 +1,10 @@
 import * as aws from "@pulumi/aws"
-import * as awsx from "@pulumi/awsx";
 import * as pulumi from "@pulumi/pulumi";
 
 interface RdsResourcesProps {
-  vpc: awsx.ec2.Vpc;
-  appSecurityGroup: aws.ec2.SecurityGroup;
+  vpcId: pulumi.Output<string>;
+  privateSubnetIds: pulumi.Output<string[]>;
+  appSgId: pulumi.Output<string>;
   dbSecretName: string;
   port: number;
 }
@@ -24,13 +24,13 @@ export class RdsResources extends pulumi.ComponentResource {
     // rds security group
     const rdsSecurityGroup = new aws.ec2.SecurityGroup('RdsSecurityGroup', {
       description: "Allow traffic from app sg to RDS",
-      vpcId: props.vpc.vpc.id,
+      vpcId: props.vpcId,
       ingress: [{
         description: "allow traffic from app sg",
         fromPort: props.port,
         toPort: props.port,
         protocol: "tcp",
-        securityGroups: [props.appSecurityGroup.id],
+        securityGroups: [props.appSgId],
       }],
       egress: [{
         fromPort: 0,
@@ -38,7 +38,7 @@ export class RdsResources extends pulumi.ComponentResource {
         protocol: "-1",
         cidrBlocks: ["0.0.0.0/0"],
       }],
-    });
+    }, { parent: this });
 
     // secret?
     // TODO: add this later with random password
@@ -46,9 +46,9 @@ export class RdsResources extends pulumi.ComponentResource {
 
     // subnet group
     const dbSubnetGroup = new aws.rds.SubnetGroup("DbSubnetGroup", {
-      subnetIds: props.vpc.privateSubnetIds,
+      subnetIds: props.privateSubnetIds,
       name: `${stackName}-db-subnet-group`
-    });
+    }, { parent: this });
 
     // instance
     const dbInstance = new aws.rds.Instance("DbInstance", {
@@ -69,7 +69,7 @@ export class RdsResources extends pulumi.ComponentResource {
       backupRetentionPeriod: 7,
       dbSubnetGroupName: dbSubnetGroup.name,
       dbName: "postgres"
-    });
+    }, { parent: this });
     this.databaseInstance = dbInstance;
   }
 }

@@ -112,7 +112,7 @@ export class WebEcsService extends pulumi.ComponentResource {
       tags: {
         Name: `${stackName}-${props.name}-tg`
       }
-    });
+    }, { parent: this });
 
     // aws ecs service
     const ecsService = new aws.ecs.Service(`${props.name}WebService`, {
@@ -141,6 +141,7 @@ export class WebEcsService extends pulumi.ComponentResource {
         subnets: props.privateSubnets
       }
     }, {
+      parent: this,
       ignoreChanges: ['taskDefinition', 'desiredCount'],
       dependsOn: [targetGroup]
     });
@@ -163,7 +164,7 @@ export class WebEcsService extends pulumi.ComponentResource {
           }
         }
       ]
-    });
+    }, { parent: this});
     this.listenerRule = listenerRule;
   }
 }

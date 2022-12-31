@@ -222,7 +222,7 @@ export class AdHocAppComponent extends pulumi.ComponentResource {
       taskRoleArn: iamResources.ecsTaskRole.arn,
     }, {
       // this ensures that the priority of the listener rule for the api service is higher than the frontend service
-      dependsOn: [apiService.listenerRule]
+      dependsOn: [apiService]
     });
 
     // Celery Default Worker

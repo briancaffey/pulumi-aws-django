@@ -7,7 +7,7 @@ const adHocBaseEnv = new AdHocBaseEnvComponent('myAdHocEnv', {
 });
 
 export const vpcId = adHocBaseEnv.vpc.vpcId;
-export const assetsBucket = adHocBaseEnv.assetsBucket.id;
+export const assetsBucketName = adHocBaseEnv.assetsBucket.id;
 export const privateSubnetIds = adHocBaseEnv.vpc.privateSubnetIds;
 export const appSgId = adHocBaseEnv.appSecurityGroup.id;
 export const albSgId = adHocBaseEnv.albSecurityGroup.id;

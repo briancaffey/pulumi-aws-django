@@ -52,7 +52,7 @@ export class BastionHostResources extends pulumi.ComponentResource {
           },
         }],
       }),
-    });
+    }, { parent: this });
 
     // policy for BastionHostRole
     const policy = new aws.iam.RolePolicy("BastionHostPolicy", {
@@ -70,13 +70,13 @@ export class BastionHostResources extends pulumi.ComponentResource {
           Resource: "*",
         }],
       }),
-    });
+    }, { parent: this });
 
     // instance profile
     const instanceProfile = new aws.iam.InstanceProfile("BastionHostInstanceProfile", {
       role: bastionHostRole.name,
       name: `${stackName}BastionInstanceProfile`
-    });
+    }, { parent: this });
 
     // bastion host user data string
     const bastionHostUserData = `
@@ -123,7 +123,7 @@ runcmd:
       vpcSecurityGroupIds: [props.appSgId],
       subnetId: props.privateSubnet,
       userData: bastionHostUserData,
-    });
+    }, { parent: this });
     this.instanceId = instance.id;
   }
 }
