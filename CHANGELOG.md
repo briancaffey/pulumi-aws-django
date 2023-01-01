@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.10.0](https://github.com/briancaffey/pulumi-aws-django/compare/v1.9.0...v1.10.0) (2023-01-01)
+
+
+### Features
+
+* **refactor:** refactor ad hoc base component ([4621575](https://github.com/briancaffey/pulumi-aws-django/commit/4621575fb879ea85f6eaabde552179a04a58e0c5))
+* **refactor:** refactor dependency graph, cloudwatch abstractions, ecs cluster abstractions added ([9d65b02](https://github.com/briancaffey/pulumi-aws-django/commit/9d65b02545671b6f382244dfdac44e6f836766ed))
+
+
+### Bug Fixes
+
+* **bastion:** fix bastionHostUserData string by using pulumi.interpolate ([37835f9](https://github.com/briancaffey/pulumi-aws-django/commit/37835f92f6a2ab55fbf26f74fcf18051cb5504b1))
+
 ## [1.9.0](https://github.com/briancaffey/pulumi-aws-django/compare/v1.8.0...v1.9.0) (2022-12-30)
 
 
