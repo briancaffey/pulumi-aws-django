@@ -79,7 +79,7 @@ export class BastionHostResources extends pulumi.ComponentResource {
     }, { parent: this });
 
     // bastion host user data string
-    const bastionHostUserData = `
+    const bastionHostUserData = pulumi.interpolate`
 #cloud-config
 package_upgrade: true
 packages:
