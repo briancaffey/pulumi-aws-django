@@ -1,55 +1,49 @@
 import * as aws from "@pulumi/aws"
 import * as pulumi from "@pulumi/pulumi";
-import { Input } from "@pulumi/pulumi";
+import { CwLoggingResources } from "../../cw";
 
 interface WorkerEcsServiceProps {
-  // defined locally
   name: string;
-  command: Input<string[]>,
+  command: pulumi.Input<string[]>,
   envVars: pulumi.Output<{ "name": string, "value": string }[]>;
-  logRetentionInDays: number;
-  cpu: string;
-  memory: string;
-  logGroupName: string;
-  logStreamPrefix: string;
+  logRetentionInDays?: number;
+  cpu?: string;
+  memory?: string;
   // from base stack
-  appSgId: Input<string>;
-  privateSubnets: Input<string[]>;
+  appSgId: pulumi.Output<string>;
+  privateSubnetIds: pulumi.Output<string[]>;
   // inputs from this stack
   image: string;
-  ecsClusterId: Input<string>;
-  executionRoleArn: Input<string>;
-  taskRoleArn: Input<string>;
+  ecsClusterId: pulumi.Output<string>;
+  executionRoleArn: pulumi.Output<string>;
+  taskRoleArn: pulumi.Output<string>;
 }
 
 export class WorkerEcsService extends pulumi.ComponentResource {
-  // public foo: aws.foo.bar;
+  private memory: string;
+  private cpu: string;
+  private logRetentionInDays: number;
+
   /**
-   * Creates a new static website hosted on AWS.
+   * Creates a new async worker service or scheduling daemon service (e.g. celery, celery beat)
    * @param name The _unique_ name of the resource.
    * @param props Props to pass to AdHocBaseEnv component
    * @param opts A bag of options that control this resource's behavior.
    */
   constructor(name: string, props: WorkerEcsServiceProps, opts?: pulumi.ResourceOptions) {
     const stackName = pulumi.getStack();
-    // TODO figure out how to fix this so it does not need to be hard coded below
-    // const region = aws.getRegionOutput();
-    // const region = new pulumi.Config();
-    // const r = region.require("region")
-
+    const region = aws.getRegionOutput();
     super(`pulumi-contrib:components:${props.name}WorkerEcsService`, name, props, opts);
 
-    // aws cloudwatch log group
-    const cwLogGroup = new aws.cloudwatch.LogGroup(`${props.name}LogGroup`, {
-      name: props.logGroupName,
-      retentionInDays: props.logRetentionInDays
-    });
+    // set defaults
+    this.cpu = props.cpu ?? "256";
+    this.memory = props.memory ?? "512";
+    this.logRetentionInDays = props.logRetentionInDays ?? 1;
 
-    // aws cloudwatch log stream
-    const cwLogStream = new aws.cloudwatch.LogStream(`${props.name}LogStream`, {
-      logGroupName: cwLogGroup.name,
-      name: props.logStreamPrefix
-    });
+    const cwLoggingResources = new CwLoggingResources(`${props.name}CwLoggingResources`, {
+      name: props.name,
+      logRetentionInDays: this.logRetentionInDays
+    }, { parent: this });
 
     // aws ecs task definition
     const taskDefinition = new aws.ecs.TaskDefinition(`${props.name}TaskDefinition`, {
@@ -63,9 +57,9 @@ export class WorkerEcsService extends pulumi.ComponentResource {
           logConfiguration: {
             logDriver: "awslogs",
             options: {
-              "awslogs-group": props.logGroupName,
-              "awslogs-region": "us-east-1",
-              "awslogs-stream-prefix": props.logStreamPrefix
+              "awslogs-group": cwLoggingResources.cwLogGroupName,
+              "awslogs-region": region.name,
+              "awslogs-stream-prefix": props.name
             }
           }
         }
@@ -75,9 +69,9 @@ export class WorkerEcsService extends pulumi.ComponentResource {
       family: `${stackName}-${props.name}`,
       networkMode: "awsvpc",
       requiresCompatibilities: ["FARGATE"],
-      cpu: props.cpu,
-      memory: props.memory,
-    });
+      cpu: this.cpu,
+      memory: this.memory,
+    }, { parent: this });
 
     // aws ecs service
     const ecsService = new aws.ecs.Service(`${props.name}CeleryService`, {
@@ -98,9 +92,10 @@ export class WorkerEcsService extends pulumi.ComponentResource {
       networkConfiguration: {
         assignPublicIp: true,
         securityGroups: [props.appSgId],
-        subnets: props.privateSubnets
+        subnets: props.privateSubnetIds
       }
     }, {
+      parent: this,
       ignoreChanges: ['taskDefinition', 'desiredCount']
     });
   }

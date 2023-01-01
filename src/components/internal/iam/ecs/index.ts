@@ -35,7 +35,7 @@ export class IamResources extends pulumi.ComponentResource {
           },
         }],
       }),
-    });
+    }, { parent: this });
     this.ecsTaskRole = ecsTaskRole;
 
     // policy for ecs task role
@@ -61,7 +61,7 @@ export class IamResources extends pulumi.ComponentResource {
           Resource: "*",
         }],
       }),
-    });
+    }, { parent: this });
 
     // task execution role
     const ecsTaskExecutionRole = new aws.iam.Role("EcsTaskExecutionRole", {
@@ -77,7 +77,7 @@ export class IamResources extends pulumi.ComponentResource {
           },
         }],
       }),
-    });
+    }, { parent: this });
     this.taskExecutionRole = ecsTaskExecutionRole;
 
     new aws.iam.RolePolicy("EcsTaskExecutionPolicy", {
@@ -129,6 +129,6 @@ export class IamResources extends pulumi.ComponentResource {
           }
         ]
       }),
-    });
+    }, { parent: this });
   }
 }

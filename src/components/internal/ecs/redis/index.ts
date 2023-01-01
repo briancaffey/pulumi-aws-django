@@ -6,14 +6,10 @@ interface RedisEcsResourcesProps {
   name: string;
   image: string;
   port: number;
-  cpu: string;
-  memory: string;
-  logGroupName: string;
-  logStreamPrefix: string;
-  logRetentionInDays: number;
-  containerName: string;
-  // https://stackoverflow.com/a/62562828/6084948
-  privateSubnets: Input<string[]>;
+  cpu?: string;
+  memory?: string;
+  logRetentionInDays?: number;
+  privateSubnetIds: Input<string[]>;
   ecsClusterId: Input<string>;
   executionRoleArn: Input<string>;
   taskRoleArn: Input<string>;
@@ -22,9 +18,11 @@ interface RedisEcsResourcesProps {
 }
 
 export class RedisEcsResources extends pulumi.ComponentResource {
-  // public foo: aws.foo.bar;
+  private memory: string;
+  private cpu: string;
+  private logRetentionInDays: number;
   /**
-   * Creates a new static website hosted on AWS.
+   * Creates a redis service in an ECS cluster
    * @param name The _unique_ name of the resource.
    * @param props Props to pass to AdHocBaseEnv component
    * @param opts A bag of options that control this resource's behavior.
@@ -34,21 +32,26 @@ export class RedisEcsResources extends pulumi.ComponentResource {
     const region = aws.getRegionOutput();
     super("pulumi-contrib:components:RedisEcsResources", name, props, opts);
 
+    // set defaults
+    this.cpu = props.cpu ?? "256";
+    this.memory = props.memory ?? "512";
+    this.logRetentionInDays = props.logRetentionInDays ?? 1;
+
     // aws cloudwatch log group
     const cwLogGroup = new aws.cloudwatch.LogGroup(`${props.name}logGroup`, {
-      name: props.logGroupName,
-      retentionInDays: props.logRetentionInDays
-    });
+      name: `/ecs/${stackName}/${props.name}`,
+      retentionInDays: this.logRetentionInDays
+    }, { parent: this });
 
     // aws cloudwatch log stream
     const cwLogStream = new aws.cloudwatch.LogStream(`${props.name}LogStream`, {
       logGroupName: cwLogGroup.name,
-      name: props.logStreamPrefix
-    });
+      name: props.name
+    }, { parent: this });
 
     // aws ecs task definition
     const taskDefinition = new aws.ecs.TaskDefinition(`${props.name}TaskDefinition`, {
-      containerDefinitions: JSON.stringify([
+      containerDefinitions: pulumi.jsonStringify([
         {
           name: props.name,
           image: props.image,
@@ -56,9 +59,9 @@ export class RedisEcsResources extends pulumi.ComponentResource {
           logConfiguration: {
             logDriver: "awslogs",
             options: {
-              "awslogs-group": props.logGroupName,
-              "awslogs-region": "us-east-1",
-              "awslogs-stream-prefix": props.logStreamPrefix
+              "awslogs-group": cwLogGroup.name,
+              "awslogs-region": region.name,
+              "awslogs-stream-prefix": props.name
             }
           },
           portMappings: [
@@ -75,9 +78,9 @@ export class RedisEcsResources extends pulumi.ComponentResource {
       family: `${stackName}-${props.name}`,
       networkMode: "awsvpc",
       requiresCompatibilities: ["FARGATE"],
-      cpu: props.cpu,
-      memory: props.memory,
-    });
+      cpu: this.cpu,
+      memory: this.memory,
+    }, { parent: this });
 
     // aws service discovery service
     // this is only needed for redis in ad hoc environments
@@ -94,7 +97,7 @@ export class RedisEcsResources extends pulumi.ComponentResource {
       healthCheckCustomConfig: {
         failureThreshold: 1
       }
-    });
+    }, { parent: this });
 
     // aws ecs service
     const ecsService = new aws.ecs.Service("RedisService", {
@@ -118,8 +121,8 @@ export class RedisEcsResources extends pulumi.ComponentResource {
       networkConfiguration: {
         assignPublicIp: true,
         securityGroups: [props.appSgId],
-        subnets: props.privateSubnets
+        subnets: props.privateSubnetIds
       }
-    })
+    }, { parent: this });
   }
 }

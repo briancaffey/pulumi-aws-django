@@ -6,6 +6,7 @@ import { WebEcsService } from "../../internal/ecs/web";
 import { ManagementCommandTask } from "../../internal/ecs/managementCommand";
 import { WorkerEcsService } from "../../internal/ecs/celery";
 import { registerAutoTags } from "../../../util";
+import { EcsClusterResources } from "../../internal/ecs/cluster";
 
 // automatically tag all resources
 registerAutoTags({
@@ -36,6 +37,7 @@ interface AdHocAppComponentProps {
 export class AdHocAppComponent extends pulumi.ComponentResource {
   public readonly url: string;
   public readonly backendUpdateScript?: pulumi.Output<string>;
+  private readonly clusterId: pulumi.Output<string>;
 
   /**
    * Creates resources for ad hoc application environments
@@ -48,6 +50,7 @@ export class AdHocAppComponent extends pulumi.ComponentResource {
 
     const stackName = pulumi.getStack();
     const hostName = props.domainName.apply(x => `${stackName}.${x}`)
+    this.url = `https://${hostName}`;
 
     const accountId = process.env.AWS_ACCOUNT_ID;
 
@@ -57,22 +60,11 @@ export class AdHocAppComponent extends pulumi.ComponentResource {
     const backendImage = `${accountId}.dkr.ecr.us-east-1.amazonaws.com/backend`;
     const frontendImage = `${accountId}.dkr.ecr.us-east-1.amazonaws.com/frontend`;
 
-    // ECS
-    // https://www.pulumi.com/registry/packages/aws/api-docs/ecs/cluster/
-    const cluster = new aws.ecs.Cluster("EcsCluster", {
-      name: `${stackName}-cluster`
-    });
-
-    // https://www.pulumi.com/registry/packages/aws/api-docs/ecs/clustercapacityproviders/
-    const clusterCapacityProviders = new aws.ecs.ClusterCapacityProviders("clusterCapacityProviders", {
-      clusterName: cluster.name,
-      capacityProviders: ["FARGATE_SPOT", "FARGATE"],
-      defaultCapacityProviderStrategies: [{
-          base: 1,
-          weight: 100,
-          capacityProvider: "FARGATE_SPOT",
-      }],
-    });
+    // ECS Cluster and Cluster Capacity Providers
+    const ecsClusterResources = new EcsClusterResources("EcsClusterResources", {
+      useSpot: true // default to using spot for ad hoc environments
+    }, { parent: this });
+    this.clusterId = ecsClusterResources.clusterId;
 
     // S3
     // TODO: add optional per-ad hoc environment S3 bucket to use instead of shared S3 bucket from base stack
@@ -127,7 +119,7 @@ export class AdHocAppComponent extends pulumi.ComponentResource {
     ]);
 
     // IAM Roles
-    const iamResources = new IamResources("IamResources", {});
+    const iamResources = new IamResources("IamResources", {}, { parent: this });
 
     // Route 53 record
     const hostedZone = aws.route53.getZoneOutput({
@@ -135,46 +127,33 @@ export class AdHocAppComponent extends pulumi.ComponentResource {
       privateZone: false
     });
 
-    new aws.route53.Record("CnameRecord", {
+    const route53CnameRecord = new aws.route53.Record("CnameRecord", {
       zoneId: hostedZone.id,
-      name: pulumi.interpolate `alpha.${props.domainName}`,
+      name: pulumi.interpolate `${stackName}.${props.domainName}`,
       type: "CNAME",
       ttl: 60,
       records: [pulumi.interpolate `${props.albDnsName}`]
-    });
-    this.url = `alpha.${props.domainName}`;
+    }, { parent: this });
 
     // Redis
     const redis = new RedisEcsResources("RedisEcsResources", {
       name: "redis",
       image: "redis:5.0.3-alpine",
-      privateSubnets: props.privateSubnets,
+      privateSubnetIds: props.privateSubnets,
       port: 6379,
-      memory: "2048",
-      cpu: "1024",
-      logGroupName: `/ecs/${stackName}/redis`,
-      logStreamPrefix: "redis",
-      ecsClusterId: cluster.id,
+      ecsClusterId: this.clusterId,
       appSgId: props.appSgId,
       executionRoleArn: iamResources.taskExecutionRole.arn,
       taskRoleArn: iamResources.ecsTaskRole.arn,
-      logRetentionInDays: 1,
       serviceDiscoveryNamespaceId: props.serviceDiscoveryNamespaceId,
-      containerName: "redis"
-    });
+    }, { parent: this });
 
     // API
     const apiService = new WebEcsService("ApiWebService", {
-      // defined locally
       name: "gunicorn",
       command: ["gunicorn", "-t", "1000", "-b", "0.0.0.0:8000", "--log-level", "info", "backend.wsgi"],
       envVars,
-      logRetentionInDays: 1,
       port: 8000,
-      cpu: "1024",
-      memory: "2048",
-      logGroupName: `/ecs/${stackName}/gunicorn`,
-      logStreamPrefix: "gunicorn",
       // health check
       healthCheckPath: "/api/health-check/",
       // alb
@@ -187,24 +166,17 @@ export class AdHocAppComponent extends pulumi.ComponentResource {
       vpcId: props.vpcId,
       // pulumi Inputs from this stack
       image: backendImage,
-      ecsClusterId: cluster.id,
+      ecsClusterId: this.clusterId,
       executionRoleArn: iamResources.taskExecutionRole.arn,
       taskRoleArn: iamResources.ecsTaskRole.arn,
-    });
+    }, { parent: this });
 
     // Frontend Service
-    // API
     const frontendService = new WebEcsService("FrontendWebService", {
       // defined locally
       name: "frontend",
       command: ["nginx", "-g", "daemon off;"],
-      logRetentionInDays: 1,
       port: 80,
-      memory: "2048",
-      cpu: "1024",
-      // logs
-      logGroupName: `/ecs/${stackName}/frontend`,
-      logStreamPrefix: "frontend",
       // health check
       healthCheckPath: "/",
       // alb
@@ -217,11 +189,12 @@ export class AdHocAppComponent extends pulumi.ComponentResource {
       vpcId: props.vpcId,
       // pulumi Inputs from this stack
       image: frontendImage,
-      ecsClusterId: cluster.id,
+      ecsClusterId: this.clusterId,
       executionRoleArn: iamResources.taskExecutionRole.arn,
       taskRoleArn: iamResources.ecsTaskRole.arn,
     }, {
       // this ensures that the priority of the listener rule for the api service is higher than the frontend service
+      parent: this,
       dependsOn: [apiService]
     });
 
@@ -231,20 +204,15 @@ export class AdHocAppComponent extends pulumi.ComponentResource {
       name: "default",
       command: ["celery", "--app=backend.celery_app:app", "worker", "--loglevel=INFO", "-Q", "default"],
       envVars,
-      logRetentionInDays: 1,
-      cpu: "1024",
-      memory: "2048",
-      logGroupName: `/ecs/${stackName}/celery-default-worker`,
-      logStreamPrefix: "celery-default-worker",
       // from base stack
       appSgId: props.appSgId,
-      privateSubnets: props.privateSubnets,
+      privateSubnetIds: props.privateSubnets,
       // pulumi Inputs from this stack
       image: backendImage,
-      ecsClusterId: cluster.id,
+      ecsClusterId: this.clusterId,
       executionRoleArn: iamResources.taskExecutionRole.arn,
       taskRoleArn: iamResources.ecsTaskRole.arn,
-    });
+    }, { parent: this });
 
     // TODO: add this
     // Celery beat
@@ -255,21 +223,17 @@ export class AdHocAppComponent extends pulumi.ComponentResource {
       name: "backendUpdate",
       command: ["python", "manage.py", "pre_update"],
       envVars,
-      containerName: "backendUpdate",
       cpu: "1024",
       memory: "2048",
-      logGroupName: `/ecs/${stackName}/backendUpdate`,
-      logRetentionInDays: 1,
-      logStreamPrefix: "backendUpdate",
       // from base stack
       appSgId: props.appSgId,
-      privateSubnets: props.privateSubnets,
+      privateSubnetIds: props.privateSubnets,
       // pulumi Inputs from this stack
-      ecsClusterId: cluster.id,
+      ecsClusterId: this.clusterId,
       image: backendImage,
       executionRoleArn: iamResources.taskExecutionRole.arn,
       taskRoleArn: iamResources.ecsTaskRole.arn,
-    });
+    }, { parent: this });
     this.backendUpdateScript = backendUpdateTask.executionScript;
   }
 }

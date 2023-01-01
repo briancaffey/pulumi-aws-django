@@ -1,43 +1,45 @@
 import * as aws from "@pulumi/aws"
 import * as pulumi from "@pulumi/pulumi";
-import { Input, Output } from "@pulumi/pulumi";
+import { CwLoggingResources } from "../../cw";
 
 interface WebEcsServiceProps {
-  // defined locally
   name: string;
-  command: Input<string[]>,
-  // envVars?: pulumi.Input<{ "name": string, "value": pulumi.Output<string> | string }[]>;
+  command: pulumi.Input<string[]>,
   envVars?: pulumi.Output<{ "name": string, "value": string }[]>;
-  logRetentionInDays: number;
+  logRetentionInDays?: number;
   port: number;
-  cpu: string;
-  memory: string;
-  logGroupName: string;
-  logStreamPrefix: string;
+  cpu?: string;
+  memory?: string;
   //health check
   healthCheckPath: string;
   healthCheckInterval?: number;
   healthCheckHealthyThreshold?: number;
   // alb
-  listenerArn: Input<string>;
-  pathPatterns: string[];
+  listenerArn: pulumi.Output<string>;
+  pathPatterns?: string[];
   hostName: pulumi.Output<string>;
   // from base stack
-  appSgId: Input<string>;
-  privateSubnets: pulumi.Input<string[]>;
-  vpcId: pulumi.Input<string>;
+  appSgId: pulumi.Output<string>;
+  privateSubnets: pulumi.Output<string[]>;
+  vpcId: pulumi.Output<string>;
   // inputs from this stack
   image: string;
-  ecsClusterId: Input<string>;
-  executionRoleArn: Input<string>;
-  taskRoleArn: Input<string>;
+  ecsClusterId: pulumi.Output<string>;
+  executionRoleArn: pulumi.Output<string>;
+  taskRoleArn: pulumi.Output<string>;
 }
 
 export class WebEcsService extends pulumi.ComponentResource {
-  // public foo: aws.foo.bar;
+  private memory: string;
+  private cpu: string;
+  private logRetentionInDays: number;
+  private healthCheckInterval: number;
+  private healthCheckHealthyThreshold: number;
+  private pathPatterns: string[];
   public readonly listenerRule: aws.alb.ListenerRule;
+
   /**
-   * Creates a new static website hosted on AWS.
+   * Creates a load balanced fargate service and associated CloudWatch resources
    * @param name The _unique_ name of the resource.
    * @param props Props to pass to AdHocBaseEnv component
    * @param opts A bag of options that control this resource's behavior.
@@ -47,17 +49,18 @@ export class WebEcsService extends pulumi.ComponentResource {
     const region = aws.getRegionOutput();
     super(`pulumi-contrib:components:${props.name}WebEcsService`, name, props, opts);
 
-    // aws cloudwatch log group
-    const cwLogGroup = new aws.cloudwatch.LogGroup(`${props.name}LogGroup`, {
-      name: props.logGroupName,
-      retentionInDays: props.logRetentionInDays
-    });
+    // set defaults
+    this.cpu = props.cpu ?? "256";
+    this.memory = props.memory ?? "512";
+    this.logRetentionInDays = props.logRetentionInDays ?? 1;
+    this.healthCheckInterval = props.healthCheckInterval ?? 5;
+    this.healthCheckHealthyThreshold = props.healthCheckHealthyThreshold ?? 2;
+    this.pathPatterns = props.pathPatterns ?? ["/*"];
 
-    // aws cloudwatch log stream
-    const cwLogStream = new aws.cloudwatch.LogStream(`${props.name}LogStream`, {
-      logGroupName: cwLogGroup.name,
-      name: props.logStreamPrefix
-    });
+    const cwLoggingResources = new CwLoggingResources(`${props.name}CwLoggingResources`, {
+      name: props.name,
+      logRetentionInDays: this.logRetentionInDays
+    }, { parent: this });
 
     // aws ecs task definition
     const taskDefinition = new aws.ecs.TaskDefinition(`${props.name}TaskDefinition`, {
@@ -71,9 +74,9 @@ export class WebEcsService extends pulumi.ComponentResource {
           logConfiguration: {
             logDriver: "awslogs",
             options: {
-              "awslogs-group": props.logGroupName,
-              "awslogs-region": "us-east-1",
-              "awslogs-stream-prefix": props.logStreamPrefix
+              "awslogs-group": cwLoggingResources.cwLogGroupName,
+              "awslogs-region": region.name,
+              "awslogs-stream-prefix": props.name
             }
           },
           portMappings: [
@@ -90,9 +93,9 @@ export class WebEcsService extends pulumi.ComponentResource {
       family: `${stackName}-${props.name}`,
       networkMode: "awsvpc",
       requiresCompatibilities: ["FARGATE"],
-      cpu: props.cpu,
-      memory: props.memory,
-    });
+      cpu: this.cpu,
+      memory: this.memory,
+    }, { parent: this });
 
     const targetGroup = new aws.alb.TargetGroup(`${props.name}TargetGroup`, {
       port: props.port,
@@ -105,16 +108,15 @@ export class WebEcsService extends pulumi.ComponentResource {
         port: "traffic-port",
         path: props.healthCheckPath,
         matcher: "200-399",
-        interval: props.healthCheckInterval ?? 5,
+        interval: this.healthCheckInterval,
         unhealthyThreshold: 3,
-        healthyThreshold: props.healthCheckHealthyThreshold ?? 2,
+        healthyThreshold: this.healthCheckHealthyThreshold,
       },
       tags: {
         Name: `${stackName}-${props.name}-tg`
       }
     }, { parent: this });
 
-    // aws ecs service
     const ecsService = new aws.ecs.Service(`${props.name}WebService`, {
       name: `${stackName}-${props.name}`,
       cluster: props.ecsClusterId,
@@ -142,8 +144,7 @@ export class WebEcsService extends pulumi.ComponentResource {
       }
     }, {
       parent: this,
-      ignoreChanges: ['taskDefinition', 'desiredCount'],
-      dependsOn: [targetGroup]
+      ignoreChanges: ['taskDefinition', 'desiredCount']
     });
 
     const listenerRule = new aws.alb.ListenerRule(`${props.name}ListenerRule`, {
@@ -155,7 +156,7 @@ export class WebEcsService extends pulumi.ComponentResource {
       conditions: [
         {
           pathPattern: {
-            values: props.pathPatterns
+            values: this.pathPatterns
           }
         },
         {
@@ -164,7 +165,7 @@ export class WebEcsService extends pulumi.ComponentResource {
           }
         }
       ]
-    }, { parent: this});
+    }, { parent: this });
     this.listenerRule = listenerRule;
   }
 }
