@@ -40,9 +40,9 @@ export class RdsResources extends pulumi.ComponentResource {
       }],
     }, { parent: this });
 
-    // secret?
-    // TODO: add this later with random password
+    // TODO: add secret with random password for rds
     // https://www.pulumi.com/registry/packages/random/api-docs/randompassword/
+    // https://www.pulumi.com/registry/packages/aws/api-docs/secretsmanager/secretversion/
 
     // subnet group
     const dbSubnetGroup = new aws.rds.SubnetGroup("DbSubnetGroup", {
@@ -68,7 +68,9 @@ export class RdsResources extends pulumi.ComponentResource {
       skipFinalSnapshot: true,
       backupRetentionPeriod: 7,
       dbSubnetGroupName: dbSubnetGroup.name,
-      dbName: "postgres"
+      // for prod environments, the prod base stackName is the same as the prod app stack name
+      // ad hoc environments have dedicated databases that are created outside of IAC
+      dbName: stackName
     }, { parent: this });
     this.databaseInstance = dbInstance;
   }

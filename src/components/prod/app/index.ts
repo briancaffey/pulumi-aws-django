@@ -16,7 +16,7 @@ registerAutoTags({
 /**
  * The inputs needed for setting up a prod app environment
  */
-interface AdHocAppComponentProps {
+interface ProdAppComponentProps {
   vpcId: pulumi.Output<string>;
   assetsBucketName: pulumi.Output<string>;
   privateSubnets: pulumi.Output<string[]>;
@@ -34,7 +34,7 @@ interface AdHocAppComponentProps {
  * Resource for prod app environment
  * Includes ECS Resources (Redis, API, Frontend, Celery, Beat, ECS Tasks, Route53 Records)
  */
-export class AdHocAppComponent extends pulumi.ComponentResource {
+export class ProdAppComponent extends pulumi.ComponentResource {
   public readonly url: string;
   public readonly backendUpdateScript?: pulumi.Output<string>;
   private readonly clusterId: pulumi.Output<string>;
@@ -42,11 +42,11 @@ export class AdHocAppComponent extends pulumi.ComponentResource {
   /**
    * Creates resources for prod application environments
    * @param name The _unique_ name of the resource.
-   * @param props Props to pass to AdHocBaseEnv component
+   * @param props Props to pass to ProdBaseEnv component
    * @param opts A bag of options that control this resource's behavior.
    */
-  constructor(name: string, props: AdHocAppComponentProps, opts?: pulumi.ResourceOptions) {
-    super("pulumi-contrib:components:AdHocApp", name, props, opts);
+  constructor(name: string, props: ProdAppComponentProps, opts?: pulumi.ResourceOptions) {
+    super("pulumi-contrib:components:ProdApp", name, props, opts);
 
     const stackName = pulumi.getStack();
     const hostName = props.domainName.apply(x => `${stackName}.${x}`)
@@ -98,7 +98,7 @@ export class AdHocAppComponent extends pulumi.ComponentResource {
       },
       {
         name: "POSTGRES_NAME",
-        value: `${stackName}-db`
+        value: stackName
       },
       {
         name: "DJANGO_SETTINGS_MODULE",

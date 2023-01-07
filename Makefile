@@ -30,3 +30,24 @@ ad-hoc-app-up:	build
 
 ad-hoc-app-destroy:	build
 	pulumi -C examples/ad-hoc/app --stack alpha --non-interactive destroy --yes
+
+prod-base-preview:	build
+	pulumi -C examples/prod/base --stack stage --non-interactive preview
+
+prod-base-up:	build
+	pulumi -C examples/prod/base --stack stage --non-interactive up --yes
+
+prod-base-destroy:	build
+	pulumi -C examples/prod/app --stack stage --non-interactive destroy --yes
+
+prod-app-preview:	build
+	pulumi -C examples/prod/app --stack stage --non-interactive preview
+
+prod-app-preview-diff:	build
+	pulumi -C examples/prod/app --stack stage --non-interactive preview --diff
+
+prod-app-up:	build
+	pulumi -C examples/prod/app --stack stage --non-interactive up --yes
+
+prod-app-destroy:	build
+	pulumi -C examples/prod/app --stack stage --non-interactive destroy --yes
