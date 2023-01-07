@@ -7,6 +7,7 @@ import { ManagementCommandTask } from "../../internal/ecs/managementCommand";
 import { WorkerEcsService } from "../../internal/ecs/celery";
 import { registerAutoTags } from "../../../util";
 import { EcsClusterResources } from "../../internal/ecs/cluster";
+import { SchedulerEcsService } from "../../internal/ecs/scheduler";
 
 // automatically tag all resources
 registerAutoTags({
@@ -154,17 +155,13 @@ export class AdHocAppComponent extends pulumi.ComponentResource {
       command: ["gunicorn", "-t", "1000", "-b", "0.0.0.0:8000", "--log-level", "info", "backend.wsgi"],
       envVars,
       port: 8000,
-      // health check
       healthCheckPath: "/api/health-check/",
-      // alb
       listenerArn: props.listenerArn,
       pathPatterns: ["/api/*", "/admin/*", "/graphql/*", "/mtv/*"],
       hostName,
-      // from base stack
       appSgId: props.appSgId,
       privateSubnets: props.privateSubnets,
       vpcId: props.vpcId,
-      // pulumi Inputs from this stack
       image: backendImage,
       ecsClusterId: this.clusterId,
       executionRoleArn: iamResources.taskExecutionRole.arn,
@@ -179,15 +176,12 @@ export class AdHocAppComponent extends pulumi.ComponentResource {
       port: 80,
       // health check
       healthCheckPath: "/",
-      // alb
       listenerArn: props.listenerArn,
       pathPatterns: ["/*"],
       hostName,
-      // base stack
       appSgId: props.appSgId,
       privateSubnets: props.privateSubnets,
       vpcId: props.vpcId,
-      // pulumi Inputs from this stack
       image: frontendImage,
       ecsClusterId: this.clusterId,
       executionRoleArn: iamResources.taskExecutionRole.arn,
@@ -200,35 +194,38 @@ export class AdHocAppComponent extends pulumi.ComponentResource {
 
     // Celery Default Worker
     const workerService = new WorkerEcsService("WorkerService", {
-      // defined locally
       name: "default",
       command: ["celery", "--app=backend.celery_app:app", "worker", "--loglevel=INFO", "-Q", "default"],
       envVars,
-      // from base stack
       appSgId: props.appSgId,
       privateSubnetIds: props.privateSubnets,
-      // pulumi Inputs from this stack
       image: backendImage,
       ecsClusterId: this.clusterId,
       executionRoleArn: iamResources.taskExecutionRole.arn,
       taskRoleArn: iamResources.ecsTaskRole.arn,
     }, { parent: this });
 
-    // TODO: add this
-    // Celery beat
+    const schedulerService = new SchedulerEcsService("SchedulerService", {
+      name: "beat",
+      command: ["celery", "--app=backend.celery_app:app", "beat", "--loglevel=INFO"],
+      envVars,
+      appSgId: props.appSgId,
+      privateSubnetIds: props.privateSubnets,
+      image: backendImage,
+      ecsClusterId: this.clusterId,
+      executionRoleArn: iamResources.taskExecutionRole.arn,
+      taskRoleArn: iamResources.ecsTaskRole.arn,
+    }, { parent: this });
 
     // backend update task
     const backendUpdateTask = new ManagementCommandTask("BackendUpdateTask", {
-      // defined locally
       name: "backendUpdate",
       command: ["python", "manage.py", "pre_update"],
       envVars,
       cpu: "1024",
       memory: "2048",
-      // from base stack
       appSgId: props.appSgId,
       privateSubnetIds: props.privateSubnets,
-      // pulumi Inputs from this stack
       ecsClusterId: this.clusterId,
       image: backendImage,
       executionRoleArn: iamResources.taskExecutionRole.arn,

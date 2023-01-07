@@ -22,6 +22,9 @@ ad-hoc-base-rm:	build
 ad-hoc-app-preview:	build
 	pulumi -C examples/ad-hoc/app --stack alpha --non-interactive preview
 
+ad-hoc-app-preview-diff:	build
+	pulumi -C examples/ad-hoc/app --stack alpha --non-interactive preview --diff
+
 ad-hoc-app-up:	build
 	pulumi -C examples/ad-hoc/app --non-interactive up --yes
 

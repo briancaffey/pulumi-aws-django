@@ -2,7 +2,7 @@ import * as aws from "@pulumi/aws"
 import * as pulumi from "@pulumi/pulumi";
 import { CwLoggingResources } from "../../cw";
 
-interface WorkerEcsServiceProps {
+interface SchedulerEcsServiceProps {
   name: string;
   command: pulumi.Input<string[]>,
   envVars: pulumi.Output<{ "name": string, "value": string }[]>;
@@ -19,7 +19,7 @@ interface WorkerEcsServiceProps {
   taskRoleArn: pulumi.Output<string>;
 }
 
-export class WorkerEcsService extends pulumi.ComponentResource {
+export class SchedulerEcsService extends pulumi.ComponentResource {
   private memory: string;
   private cpu: string;
   private logRetentionInDays: number;
@@ -30,7 +30,7 @@ export class WorkerEcsService extends pulumi.ComponentResource {
    * @param props Props to pass to AdHocBaseEnv component
    * @param opts A bag of options that control this resource's behavior.
    */
-  constructor(name: string, props: WorkerEcsServiceProps, opts?: pulumi.ResourceOptions) {
+  constructor(name: string, props: SchedulerEcsServiceProps, opts?: pulumi.ResourceOptions) {
     const stackName = pulumi.getStack();
     const region = aws.getRegionOutput();
     super(`pulumi-contrib:components:${props.name}WorkerEcsService`, name, props, opts);
@@ -52,6 +52,7 @@ export class WorkerEcsService extends pulumi.ComponentResource {
           command: props.command,
           environment: props.envVars,
           essential: true,
+          user: "root",
           logConfiguration: {
             logDriver: "awslogs",
             options: {
@@ -72,7 +73,7 @@ export class WorkerEcsService extends pulumi.ComponentResource {
     }, { parent: this });
 
     // aws ecs service
-    const ecsService = new aws.ecs.Service(`${props.name}CeleryService`, {
+    const ecsService = new aws.ecs.Service(`${props.name}SchedulerService`, {
       name: `${stackName}-${props.name}`,
       cluster: props.ecsClusterId,
       taskDefinition: taskDefinition.arn,
@@ -94,7 +95,7 @@ export class WorkerEcsService extends pulumi.ComponentResource {
       }
     }, {
       parent: this,
-      ignoreChanges: ['taskDefinition', 'desiredCount']
+      ignoreChanges: ['taskDefinition']
     });
   }
 }
