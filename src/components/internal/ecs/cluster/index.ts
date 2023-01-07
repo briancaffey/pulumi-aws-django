@@ -7,6 +7,7 @@ interface EcsClusterResourcesProps {
 
 export class EcsClusterResources extends pulumi.ComponentResource {
   public clusterId: pulumi.Output<string>;
+  public clusterName: pulumi.Output<string>;
   /**
    * Creates a new static website hosted on AWS.
    * @param name The _unique_ name of the resource.
@@ -24,6 +25,7 @@ export class EcsClusterResources extends pulumi.ComponentResource {
       name: `${stackName}-cluster`
     }, { parent: this });
     this.clusterId = cluster.id;
+    this.clusterName = cluster.name;
 
     new aws.ecs.ClusterCapacityProviders("clusterCapacityProviders", {
       clusterName: cluster.name,

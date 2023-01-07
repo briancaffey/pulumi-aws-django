@@ -7,6 +7,7 @@ import { WorkerEcsService } from "../../internal/ecs/celery";
 import { registerAutoTags } from "../../../util";
 import { EcsClusterResources } from "../../internal/ecs/cluster";
 import { SchedulerEcsService } from "../../internal/ecs/scheduler";
+import { AutoScalingResources } from "../../internal/autoscaling";
 
 // automatically tag all resources
 registerAutoTags({
@@ -159,6 +160,11 @@ export class ProdAppComponent extends pulumi.ComponentResource {
       taskRoleArn: iamResources.ecsTaskRole.arn,
     }, { parent: this });
 
+    new AutoScalingResources("ApiAutoScaling", {
+      clusterName: ecsClusterResources.clusterName,
+      serviceName: apiService.serviceName
+    }, { parent: apiService})
+
     const frontendService = new WebEcsService("FrontendWebService", {
       name: "frontend",
       command: ["nginx", "-g", "daemon off;"],
@@ -191,6 +197,11 @@ export class ProdAppComponent extends pulumi.ComponentResource {
       executionRoleArn: iamResources.taskExecutionRole.arn,
       taskRoleArn: iamResources.ecsTaskRole.arn,
     }, { parent: this });
+
+    new AutoScalingResources("WorkerAutoScaling", {
+      clusterName: ecsClusterResources.clusterName,
+      serviceName: workerService.serviceName
+    }, { parent: workerService})
 
     const schedulerService = new SchedulerEcsService("SchedulerService", {
       name: "beat",

@@ -37,6 +37,7 @@ export class WebEcsService extends pulumi.ComponentResource {
   private healthCheckHealthyThreshold: number;
   private pathPatterns: string[];
   public readonly listenerRule: aws.alb.ListenerRule;
+  public readonly serviceName: pulumi.Output<string>;
 
   /**
    * Creates a load balanced fargate service and associated CloudWatch resources
@@ -146,6 +147,7 @@ export class WebEcsService extends pulumi.ComponentResource {
       parent: this,
       ignoreChanges: ['taskDefinition', 'desiredCount']
     });
+    this.serviceName = ecsService.name;
 
     const listenerRule = new aws.alb.ListenerRule(`${props.name}ListenerRule`, {
       listenerArn: props.listenerArn,

@@ -9,10 +9,8 @@ interface WorkerEcsServiceProps {
   logRetentionInDays?: number;
   cpu?: string;
   memory?: string;
-  // from base stack
   appSgId: pulumi.Output<string>;
   privateSubnetIds: pulumi.Output<string[]>;
-  // inputs from this stack
   image: string;
   ecsClusterId: pulumi.Output<string>;
   executionRoleArn: pulumi.Output<string>;
@@ -23,6 +21,7 @@ export class WorkerEcsService extends pulumi.ComponentResource {
   private memory: string;
   private cpu: string;
   private logRetentionInDays: number;
+  public readonly serviceName: pulumi.Output<string>;
 
   /**
    * Creates a new async worker service or scheduling daemon service (e.g. celery, celery beat)
@@ -96,5 +95,6 @@ export class WorkerEcsService extends pulumi.ComponentResource {
       parent: this,
       ignoreChanges: ['taskDefinition', 'desiredCount']
     });
+    this.serviceName = ecsService.name;
   }
 }
