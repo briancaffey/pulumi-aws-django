@@ -53,6 +53,14 @@ export class AdHocAppComponent extends pulumi.ComponentResource {
     const hostName = props.domainName.apply(x => `${stackName}.${x}`)
     this.url = `https://${hostName}`;
 
+    interface EnvVar {
+      name: string;
+      value: string;
+    }
+
+    let config = new pulumi.Config();
+    let extraEnvVars = config.getObject<EnvVar[]>("extraEnvVars");
+
     const accountId = process.env.AWS_ACCOUNT_ID;
 
     // ECR images
@@ -80,7 +88,7 @@ export class AdHocAppComponent extends pulumi.ComponentResource {
       props.assetsBucketName
     ]);
 
-    const envVars = hosts.apply(([pgHost, baseStackName, domainName, assetsBucketName]) => [
+    let envVars = hosts.apply(([pgHost, baseStackName, domainName, assetsBucketName]) => [
       {
         name: "S3_BUCKET_NAME",
         value: assetsBucketName,
@@ -119,10 +127,12 @@ export class AdHocAppComponent extends pulumi.ComponentResource {
       }
     ]);
 
-    // IAM Roles
+    if (extraEnvVars) {
+      envVars = envVars.apply(x => x.concat(extraEnvVars!))
+    }
+
     const iamResources = new IamResources("IamResources", {}, { parent: this });
 
-    // Route 53 record
     const hostedZone = aws.route53.getZoneOutput({
       name: props.domainName.apply(x => x),
       privateZone: false
@@ -136,7 +146,6 @@ export class AdHocAppComponent extends pulumi.ComponentResource {
       records: [pulumi.interpolate `${props.albDnsName}`]
     }, { parent: this });
 
-    // Redis
     const redis = new RedisEcsResources("RedisEcsResources", {
       name: "redis",
       image: "redis:5.0.3-alpine",
@@ -149,7 +158,6 @@ export class AdHocAppComponent extends pulumi.ComponentResource {
       serviceDiscoveryNamespaceId: props.serviceDiscoveryNamespaceId,
     }, { parent: this });
 
-    // API
     const apiService = new WebEcsService("ApiWebService", {
       name: "gunicorn",
       command: ["gunicorn", "-t", "1000", "-b", "0.0.0.0:8000", "--log-level", "info", "backend.wsgi"],
@@ -168,13 +176,11 @@ export class AdHocAppComponent extends pulumi.ComponentResource {
       taskRoleArn: iamResources.ecsTaskRole.arn,
     }, { parent: this });
 
-    // Frontend Service
     const frontendService = new WebEcsService("FrontendWebService", {
       // defined locally
       name: "frontend",
       command: ["nginx", "-g", "daemon off;"],
       port: 80,
-      // health check
       healthCheckPath: "/",
       listenerArn: props.listenerArn,
       pathPatterns: ["/*"],
@@ -192,7 +198,6 @@ export class AdHocAppComponent extends pulumi.ComponentResource {
       dependsOn: [apiService]
     });
 
-    // Celery Default Worker
     const workerService = new WorkerEcsService("WorkerService", {
       name: "default",
       command: ["celery", "--app=backend.celery_app:app", "worker", "--loglevel=INFO", "-Q", "default"],
@@ -217,7 +222,6 @@ export class AdHocAppComponent extends pulumi.ComponentResource {
       taskRoleArn: iamResources.ecsTaskRole.arn,
     }, { parent: this });
 
-    // backend update task
     const backendUpdateTask = new ManagementCommandTask("BackendUpdateTask", {
       name: "backendUpdate",
       command: ["python", "manage.py", "pre_update"],
