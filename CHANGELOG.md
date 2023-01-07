@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.11.0](https://github.com/briancaffey/pulumi-aws-django/compare/v1.10.0...v1.11.0) (2023-01-07)
+
+
+### Features
+
+* **ad-hoc:** complete example of ad hoc base and app environment and add celery beat service ([fe8ab42](https://github.com/briancaffey/pulumi-aws-django/commit/fe8ab42b2666f81b7e5cacb557fd1cece5be3f06))
+* **autoscaling:** add autoscaling resources for api and worker service ([27097a6](https://github.com/briancaffey/pulumi-aws-django/commit/27097a61ab7ada5da1bc570d69112e8447202fcd))
+* **config:** add config to ad hoc app example ([cbe60cf](https://github.com/briancaffey/pulumi-aws-django/commit/cbe60cfe23102a3674ae03ecde3ef7d95e8844b3))
+* **examples:** completed prod infrastructure examples for base and app ([7fe77a9](https://github.com/briancaffey/pulumi-aws-django/commit/7fe77a96778812fa9d239d41cd56af89b9ba6ed2))
+* **prod:** add elasticache and base and app components for prod infrastructure stacks ([94611b3](https://github.com/briancaffey/pulumi-aws-django/commit/94611b3c1dc1c85af60632660f0c6aa2a020b524))
+* **readme:** add readme with links to other libraries ([e128402](https://github.com/briancaffey/pulumi-aws-django/commit/e1284026ed2903598763ad6fe1294e895f008429))
+
 ## [1.10.0](https://github.com/briancaffey/pulumi-aws-django/compare/v1.9.0...v1.10.0) (2023-01-01)
 
 
