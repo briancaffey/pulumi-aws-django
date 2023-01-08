@@ -97,7 +97,7 @@ export class ProdBaseEnvComponent extends pulumi.ComponentResource {
       privateSubnetIds: vpc.privateSubnetIds,
       appSgId: securityGroupResources.appSecurityGroup.id,
       port: 6379
-    });
+    }, { parent: this });
     this.elastiCacheCluster = elastiCacheResources.elastiCacheCluster;
 
 

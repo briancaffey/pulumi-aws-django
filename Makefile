@@ -38,7 +38,7 @@ prod-base-up:	build
 	pulumi -C examples/prod/base --stack stage --non-interactive up --yes
 
 prod-base-destroy:	build
-	pulumi -C examples/prod/app --stack stage --non-interactive destroy --yes
+	pulumi -C examples/prod/base --stack stage --non-interactive destroy --yes
 
 prod-app-preview:	build
 	pulumi -C examples/prod/app --stack stage --non-interactive preview
