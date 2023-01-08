@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.12.0](https://github.com/briancaffey/pulumi-aws-django/compare/v1.11.0...v1.12.0) (2023-01-08)
+
+
+### Features
+
+* **gha:** add gha workflow for publishing tagged version to npm ([f58b9e0](https://github.com/briancaffey/pulumi-aws-django/commit/f58b9e0f952767971db14a5e21d3ba9850d11e2c))
+
+
+### Bug Fixes
+
+* **makefile:** fix path in makefile command ([c6d4c15](https://github.com/briancaffey/pulumi-aws-django/commit/c6d4c15bf8944eda421b0d66319a888200444027))
+
 ## [1.11.0](https://github.com/briancaffey/pulumi-aws-django/compare/v1.10.0...v1.11.0) (2023-01-07)
 
 
