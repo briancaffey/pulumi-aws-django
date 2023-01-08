@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.12.1](https://github.com/briancaffey/pulumi-aws-django/compare/v1.12.0...v1.12.1) (2023-01-08)
+
+
+### Bug Fixes
+
+* **gha:** fix tag pattern in gha ([3e07277](https://github.com/briancaffey/pulumi-aws-django/commit/3e0727780088c4e2fcdaf50f021e2712e18c03c4))
+
 ## [1.12.0](https://github.com/briancaffey/pulumi-aws-django/compare/v1.11.0...v1.12.0) (2023-01-08)
 
 
