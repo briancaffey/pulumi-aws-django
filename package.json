@@ -1,5 +1,15 @@
 {
   "name": "pulumi-aws-django",
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:briancaffey/pulumi-aws-django.git"
+  },
+  "author": {
+    "name": "Brian Caffey",
+    "email": "briancaffey2010@gmail.com",
+    "url": "https://briancaffey.github.io",
+    "organization": false
+  },
   "version": "1.11.0",
   "main": "bin/index.js",
   "typings": "bin/index.d.ts",
