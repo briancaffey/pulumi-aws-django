@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.13.0](https://github.com/briancaffey/pulumi-aws-django/compare/v1.12.1...v1.13.0) (2023-01-15)
+
+
+### Features
+
+* **docs:** update docs on release process ([31e51f5](https://github.com/briancaffey/pulumi-aws-django/commit/31e51f59045cf741599c11c4ad1cd43b0850555b))
+* **gha:** debug release process ([b23d02d](https://github.com/briancaffey/pulumi-aws-django/commit/b23d02daa421e4d04c9dbf632fcc0ddbcac5c469))
+
+
+### Bug Fixes
+
+* **release:** add GH PAT to release-please workflow ([dd1c99c](https://github.com/briancaffey/pulumi-aws-django/commit/dd1c99c1567c84628a9130467b864264f5712c6c))
+
 ## [1.12.1](https://github.com/briancaffey/pulumi-aws-django/compare/v1.12.0...v1.12.1) (2023-01-08)
 
 
