@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.15.0](https://github.com/briancaffey/pulumi-aws-django/compare/v1.14.0...v1.15.0) (2023-01-17)
+
+
+### Features
+
+* **publish:** fix publish workflow ([90c5d04](https://github.com/briancaffey/pulumi-aws-django/commit/90c5d04841c03587a0dfcbd22297b2b4f780b182))
+
 ## [1.14.0](https://github.com/briancaffey/pulumi-aws-django/compare/v1.13.0...v1.14.0) (2023-01-17)
 
 
