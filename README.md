@@ -11,4 +11,7 @@ For more information about this library, see this article: [https://briancaffey.
 
 ## Release Process
 
-- Releases are managed by `release-please`
+Releases are managed by `release-please`. The following secrets have been added to this GitHub repository:
+
+- NPM_TOKEN (npm API key)
+- GH_PAT (GitHub Personal Access Token with the ability to update workflows)
