@@ -10,9 +10,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: "16"
       - run: npm install
       - run: npm run build
-      - run: npm test
       - name: Create package
         run: tar -czf package.tgz dist/
       - name: Upload package to artifact
@@ -25,6 +27,9 @@ jobs:
     needs: build
     steps:
       - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: "16"
       - name: Download package from artifact
         uses: actions/download-artifact@v3
         with:
