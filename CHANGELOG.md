@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.14.0](https://github.com/briancaffey/pulumi-aws-django/compare/v1.13.0...v1.14.0) (2023-01-17)
+
+
+### Features
+
+* **releases:** add GH_PAT to release-please workflow ([60b7654](https://github.com/briancaffey/pulumi-aws-django/commit/60b7654eefb82a7c012235126db0828689655e9d))
+
 ## [1.13.0](https://github.com/briancaffey/pulumi-aws-django/compare/v1.12.1...v1.13.0) (2023-01-15)
 
 
