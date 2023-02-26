@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.16.0](https://github.com/briancaffey/pulumi-aws-django/compare/v1.15.0...v1.16.0) (2023-01-17)
+
+
+### Features
+
+* **pulumi:** update pulumi package version to ^3.51.0 ([efc3ae5](https://github.com/briancaffey/pulumi-aws-django/commit/efc3ae54128b1047f27e494640fdf0eeea03c006))
+
 ## [1.15.0](https://github.com/briancaffey/pulumi-aws-django/compare/v1.14.0...v1.15.0) (2023-01-17)
 
 
