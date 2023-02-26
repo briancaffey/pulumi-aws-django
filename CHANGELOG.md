@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.17.0](https://github.com/briancaffey/pulumi-aws-django/compare/v1.16.0...v1.17.0) (2023-02-26)
+
+
+### Features
+
+* **gha:** update publish workflow ([36d1081](https://github.com/briancaffey/pulumi-aws-django/commit/36d1081f5e7f956d2dff7453b71e4e444a29aede))
+
 ## [1.16.0](https://github.com/briancaffey/pulumi-aws-django/compare/v1.15.0...v1.16.0) (2023-01-17)
 
 
