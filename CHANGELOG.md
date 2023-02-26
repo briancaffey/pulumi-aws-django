@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.17.1](https://github.com/briancaffey/pulumi-aws-django/compare/v1.17.0...v1.17.1) (2023-02-26)
+
+
+### Bug Fixes
+
+* **publish:** fix npm publish command ([fd32945](https://github.com/briancaffey/pulumi-aws-django/commit/fd329450bb73bce9ae0662be62b6bc272700071a))
+
 ## [1.17.0](https://github.com/briancaffey/pulumi-aws-django/compare/v1.16.0...v1.17.0) (2023-02-26)
 
 
