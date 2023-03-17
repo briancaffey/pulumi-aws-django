@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.20.0](https://github.com/briancaffey/pulumi-aws-django/compare/v1.19.0...v1.20.0) (2023-03-17)
+
+
+### Features
+
+* **token:** change npm token to use classic automation token type ([8ad2b32](https://github.com/briancaffey/pulumi-aws-django/commit/8ad2b328280db6bcb7971ed221998903e6c3f8a0))
+
 ## [1.19.0](https://github.com/briancaffey/pulumi-aws-django/compare/v1.18.0...v1.19.0) (2023-03-17)
 
 
