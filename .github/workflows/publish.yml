@@ -16,4 +16,8 @@ jobs:
           registry-url: "https://registry.npmjs.org"
       - run: npm install
       - run: npm run build
+      - name: Login to npm
+        run: |
+          echo "//registry.npmjs.org/:_authToken=\${NPM_TOKEN}" > .npmrc
+          npm config set email "${NPM_EMAIL}"
       - run: npm publish
