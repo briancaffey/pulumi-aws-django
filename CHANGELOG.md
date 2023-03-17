@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.19.0](https://github.com/briancaffey/pulumi-aws-django/compare/v1.18.0...v1.19.0) (2023-03-17)
+
+
+### Features
+
+* **npm:** add npm login for publish action ([1c03c3e](https://github.com/briancaffey/pulumi-aws-django/commit/1c03c3e79eb7262e409d3205e09f41c8932be0d1))
+
 ## [1.18.0](https://github.com/briancaffey/pulumi-aws-django/compare/v1.17.1...v1.18.0) (2023-03-17)
 
 
