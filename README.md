@@ -17,3 +17,5 @@ Releases are managed by `release-please`. The following secrets have been added 
 - GH_PAT (GitHub Personal Access Token with the ability to update workflows)
 
 ## Testing Release and Publishing Triggers
+
+- Using an npm token (Classic token with Automation option selected)
