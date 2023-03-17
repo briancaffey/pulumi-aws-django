@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.18.0](https://github.com/briancaffey/pulumi-aws-django/compare/v1.17.1...v1.18.0) (2023-03-17)
+
+
+### Features
+
+* **release:** test release and publishing triggers ([4426b88](https://github.com/briancaffey/pulumi-aws-django/commit/4426b8813764445e4e5e6bce0d202a0b5745989b))
+
 ## [1.17.1](https://github.com/briancaffey/pulumi-aws-django/compare/v1.17.0...v1.17.1) (2023-02-26)
 
 
