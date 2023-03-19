@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.24.0](https://github.com/briancaffey/pulumi-aws-django/compare/v1.23.0...v1.24.0) (2023-03-19)
+
+
+### Features
+
+* **login:** remove npm login command ([8e21dd0](https://github.com/briancaffey/pulumi-aws-django/commit/8e21dd008cd50c68d5434952c9975f18710adcdf))
+
 ## [1.23.0](https://github.com/briancaffey/pulumi-aws-django/compare/v1.22.0...v1.23.0) (2023-03-19)
 
 
