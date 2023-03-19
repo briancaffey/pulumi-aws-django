@@ -23,5 +23,4 @@ jobs:
         run: |
           echo "//registry.npmjs.org/:_authToken=\${NPM_TOKEN}" > .npmrc
           npm config set email "${NPM_EMAIL}"
-          npm login
       - run: npm publish
