@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.22.0](https://github.com/briancaffey/pulumi-aws-django/compare/v1.21.0...v1.22.0) (2023-03-19)
+
+
+### Features
+
+* **npm:** add verbose loglevel ([94c3b48](https://github.com/briancaffey/pulumi-aws-django/commit/94c3b4891ea98d367d89589ca91017d700907729))
+
 ## [1.21.0](https://github.com/briancaffey/pulumi-aws-django/compare/v1.20.0...v1.21.0) (2023-03-17)
 
 
