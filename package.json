@@ -10,7 +10,7 @@
     "url": "https://briancaffey.github.io",
     "organization": false
   },
-  "version": "1.22.0",
+  "version": "1.23.0",
   "main": "bin/index.js",
   "typings": "bin/index.d.ts",
   "devDependencies": {

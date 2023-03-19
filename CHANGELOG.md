@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.23.0](https://github.com/briancaffey/pulumi-aws-django/compare/v1.22.0...v1.23.0) (2023-03-19)
+
+
+### Features
+
+* **gha:** add env var for NPM_TOKEN from repo secret ([95af22e](https://github.com/briancaffey/pulumi-aws-django/commit/95af22e50a9fa196234551ae9827b45fc0fc612b))
+
 ## [1.22.0](https://github.com/briancaffey/pulumi-aws-django/compare/v1.21.0...v1.22.0) (2023-03-19)
 
 
