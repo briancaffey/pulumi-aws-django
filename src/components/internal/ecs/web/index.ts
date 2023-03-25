@@ -99,6 +99,7 @@ export class WebEcsService extends pulumi.ComponentResource {
     }, { parent: this });
 
     const targetGroup = new aws.alb.TargetGroup(`${props.name}TargetGroup`, {
+      name: `${stackName}-${props.name}-tg`,
       port: props.port,
       protocol: "HTTP",
       targetType: "ip",
