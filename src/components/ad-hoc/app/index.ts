@@ -3,6 +3,7 @@ import * as pulumi from "@pulumi/pulumi";
 import { IamResources } from "../../internal/iam/ecs";
 import { RedisEcsResources } from "../../internal/ecs/redis";
 import { WebEcsService } from "../../internal/ecs/web";
+import { WebEcsServiceWithNginx } from "../../internal/ecs/webWithNginx";
 import { ManagementCommandTask } from "../../internal/ecs/managementCommand";
 import { WorkerEcsService } from "../../internal/ecs/celery";
 import { registerAutoTags } from "../../../util";
@@ -68,6 +69,7 @@ export class AdHocAppComponent extends pulumi.ComponentResource {
     // TODO: lookup from ecr.getRepo / ecr.getImage?
     const backendImage = `${accountId}.dkr.ecr.us-east-1.amazonaws.com/backend`;
     const frontendImage = `${accountId}.dkr.ecr.us-east-1.amazonaws.com/frontend`;
+    const nginxImage = `${accountId}.dkr.ecr.us-east-1.amazonaws.com/backend-nginx`;
 
     // ECS Cluster and Cluster Capacity Providers
     const ecsClusterResources = new EcsClusterResources("EcsClusterResources", {
@@ -158,7 +160,9 @@ export class AdHocAppComponent extends pulumi.ComponentResource {
       serviceDiscoveryNamespaceId: props.serviceDiscoveryNamespaceId,
     }, { parent: this });
 
-    const apiService = new WebEcsService("ApiWebService", {
+    const apiService = new WebEcsServiceWithNginx("ApiWebService", {
+      nginxImage: nginxImage,
+      nginxPort: 443,
       name: "gunicorn",
       command: ["gunicorn", "-t", "1000", "-b", "0.0.0.0:8000", "--log-level", "info", "backend.wsgi"],
       envVars,
