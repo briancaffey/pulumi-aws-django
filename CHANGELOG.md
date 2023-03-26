@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.25.0](https://github.com/briancaffey/pulumi-aws-django/compare/v1.24.0...v1.25.0) (2023-03-26)
+
+
+### Features
+
+* **nginx-web:** add component for ecs web service that uses nginx as a sidecar for end-to-end encryption ([2d93bac](https://github.com/briancaffey/pulumi-aws-django/commit/2d93bac59d4a46c736afa32111a12625501db0ef))
+* **tg:** add name property for target group in web component ([b0a5825](https://github.com/briancaffey/pulumi-aws-django/commit/b0a5825651460ed31308560329335155dbf61e54))
+
 ## [1.24.0](https://github.com/briancaffey/pulumi-aws-django/compare/v1.23.0...v1.24.0) (2023-03-19)
 
 
