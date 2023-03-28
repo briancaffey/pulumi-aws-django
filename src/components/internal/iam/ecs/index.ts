@@ -59,6 +59,15 @@ export class IamResources extends pulumi.ComponentResource {
           ],
           Effect: "Allow",
           Resource: "*",
+        }, {
+          Effect: "Allow",
+          Action: [
+            "ssmmessages:CreateControlChannel",
+            "ssmmessages:CreateDataChannel",
+            "ssmmessages:OpenControlChannel",
+            "ssmmessages:OpenDataChannel"
+          ],
+          Resource: "*"
         }],
       }),
     }, { parent: this });

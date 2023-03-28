@@ -50,13 +50,25 @@ export class RdsResources extends pulumi.ComponentResource {
       name: `${stackName}-db-subnet-group`
     }, { parent: this });
 
+    const dbParameterGroup = new aws.rds.ParameterGroup("DbParameterGroup", {
+      name: `${stackName}parametergroup`,
+      family: "postgres13",
+      parameters: [
+        {
+          name: "rds.force_ssl",
+          value: "1",
+        }
+      ],
+    }, { parent: this });
+
     // instance
     const dbInstance = new aws.rds.Instance("DbInstance", {
       identifier: `${stackName}-rds`,
       instanceClass: "db.t3.micro",
       vpcSecurityGroupIds: [rdsSecurityGroup.id],
+      caCertIdentifier: "rds-ca-2019",
       engine: "postgres",
-      engineVersion: "13.4",
+      engineVersion: "13.7",
       port: props.port,
       username: "postgres",
       password: "postgres",
@@ -70,7 +82,8 @@ export class RdsResources extends pulumi.ComponentResource {
       dbSubnetGroupName: dbSubnetGroup.name,
       // for prod environments, the prod base stackName is the same as the prod app stack name
       // ad hoc environments have dedicated databases that are created outside of IAC
-      dbName: stackName
+      dbName: stackName,
+      parameterGroupName: dbParameterGroup.name
     }, { parent: this });
     this.databaseInstance = dbInstance;
   }
