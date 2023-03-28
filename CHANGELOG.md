@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.26.0](https://github.com/briancaffey/pulumi-aws-django/compare/v1.25.0...v1.26.0) (2023-03-28)
+
+
+### Features
+
+* **parameter-group:** add parameter group with force_ssl turned on ([802ca65](https://github.com/briancaffey/pulumi-aws-django/commit/802ca6518cba92e0721e5321c057b1d8868369e3))
+
 ## [1.25.0](https://github.com/briancaffey/pulumi-aws-django/compare/v1.24.0...v1.25.0) (2023-03-26)
 
 
