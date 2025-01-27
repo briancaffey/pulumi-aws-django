@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.27.0](https://github.com/briancaffey/pulumi-aws-django/compare/v1.26.0...v1.27.0) (2025-01-27)
+
+
+### Features
+
+* **upgrade:** upgrade all dependencies to latest versions ([ff1019b](https://github.com/briancaffey/pulumi-aws-django/commit/ff1019b8eabd5481882007fdd13f6f7828f7756a))
+
 ## [1.26.0](https://github.com/briancaffey/pulumi-aws-django/compare/v1.25.0...v1.26.0) (2023-03-28)
 
 
