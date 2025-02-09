@@ -2,10 +2,10 @@ import * as aws from "@pulumi/aws"
 import * as awsx from "@pulumi/awsx";
 import * as pulumi from "@pulumi/pulumi";
 import { AlbResources } from "../../internal/alb";
-import { BastionHostResources } from '../../internal/bastion';
 import { RdsResources } from '../../internal/rds';
 import { registerAutoTags } from "../../../util";
 import { SecurityGroupResources } from "../../internal/sg";
+import { ElastiCacheResources } from '../../internal/elasticache'
 
 // automatically tag all resources
 registerAutoTags({
@@ -15,7 +15,7 @@ registerAutoTags({
 /**
  * The inputs needed for setting up and ad hoc environment
  */
-interface AdHocBaseEnvComponentProps {
+interface EcsBaseEnvComponentProps {
   certificateArn: string;
   domainName: string;
 }
@@ -24,19 +24,18 @@ interface AdHocBaseEnvComponentProps {
  * Base resources for Ad Hoc environments.
  * Includes networking resources (VPC, SG, ALB, CloudMap), RDS and S3
  */
-export class AdHocBaseEnvComponent extends pulumi.ComponentResource {
+export class EcsBaseEnvComponent extends pulumi.ComponentResource {
 
   public readonly vpc: awsx.ec2.Vpc;
   public readonly alb: aws.alb.LoadBalancer;
   public readonly appSecurityGroup: aws.ec2.SecurityGroup;
   public readonly albSecurityGroup: aws.ec2.SecurityGroup;
-  public readonly serviceDiscoveryNamespace: aws.servicediscovery.PrivateDnsNamespace;
   public readonly databaseInstance: aws.rds.Instance;
   public readonly assetsBucket: aws.s3.Bucket;
   public readonly domainName: string;
   public readonly listener: aws.alb.Listener;
   public readonly stackName: string;
-  public readonly bastionHostInstanceId?: pulumi.Output<string>;
+  public readonly elastiCacheCluster: aws.elasticache.Cluster;
 
   /**
    * Creates base resources to support ad hoc application environments
@@ -44,8 +43,8 @@ export class AdHocBaseEnvComponent extends pulumi.ComponentResource {
    * @param props Props to pass to AdHocBaseEnv component
    * @param opts A bag of options that control this resource's behavior.
    */
-  constructor(name: string, props: AdHocBaseEnvComponentProps, opts?: pulumi.ResourceOptions) {
-    super("pulumi-contrib:components:AdHocBaseEnv", name, props, opts);
+  constructor(name: string, props: EcsBaseEnvComponentProps, opts?: pulumi.ResourceOptions) {
+    super("pulumi-contrib:components:EcsBaseEnv", name, props, opts);
 
     const stackName = pulumi.getStack();
     this.stackName = stackName;
@@ -55,9 +54,15 @@ export class AdHocBaseEnvComponent extends pulumi.ComponentResource {
       cidrBlock: "10.0.0.0/16",
       numberOfAvailabilityZones: 2,
       enableDnsHostnames: true,
-      enableDnsSupport: true
+      enableDnsSupport: true,
+      natGateways: {
+        strategy: awsx.ec2.NatGatewayStrategy.Single,
+      },
     }, { parent: this });
     this.vpc = vpc;
+    // const privateRouteTableIds = vpc.subnets.map(subnet => subnet.routeTable.id);
+    const privateRouteTableIds = vpc.subnets.get()
+
 
     const assetsBucket = new aws.s3.Bucket("assetsBucket", {
       bucket: `${props.domainName.replace(".", "-")}-${stackName}-assets-bucket`,
@@ -66,7 +71,8 @@ export class AdHocBaseEnvComponent extends pulumi.ComponentResource {
     this.assetsBucket = assetsBucket;
 
     const securityGroupResources = new SecurityGroupResources("SecurityGroupResources", {
-      vpcId: vpc.vpcId
+      vpcId: vpc.vpcId,
+      privateSubnetIds: vpc.privateSubnetIds,
     }, { parent: this });
     this.appSecurityGroup = securityGroupResources.appSecurityGroup;
     this.albSecurityGroup = securityGroupResources.albSecurityGroup;
@@ -81,16 +87,6 @@ export class AdHocBaseEnvComponent extends pulumi.ComponentResource {
     this.alb = loadBalancerResources.alb;
     this.listener = loadBalancerResources.listener;
 
-    // CloudMap service discovery is only needed in ad hoc environments
-    // It is needed to support running redis in our ECS cluster
-    const sdNameSpace = new aws.servicediscovery.PrivateDnsNamespace("PrivateDnsNamespace", {
-      description: "private dns namespace for ad hoc environment",
-      vpc: vpc.vpcId,
-      name: `${stackName}-sd-ns`
-    }, { parent: this });
-    this.serviceDiscoveryNamespace = sdNameSpace;
-
-    // RDS
     const rdsResources = new RdsResources("RdsResources", {
       appSgId: securityGroupResources.appSecurityGroup.id,
       dbSecretName: "DB_SECRET_NAME",
@@ -100,12 +96,12 @@ export class AdHocBaseEnvComponent extends pulumi.ComponentResource {
     }, { parent: this });
     this.databaseInstance = rdsResources.databaseInstance;
 
-    // BastionHost
-    const bastionHost = new BastionHostResources("BastionHostResources", {
+    const elastiCacheResources = new ElastiCacheResources("ElastiCacheResources", {
+      vpcId: vpc.vpcId,
+      privateSubnetIds: vpc.privateSubnetIds,
       appSgId: securityGroupResources.appSecurityGroup.id,
-      rdsAddress: rdsResources.databaseInstance.address,
-      privateSubnet: vpc.privateSubnetIds[0]
+      port: 6379
     }, { parent: this });
-    this.bastionHostInstanceId = bastionHost.instanceId;
+    this.elastiCacheCluster = elastiCacheResources.elastiCacheCluster;
   }
 }

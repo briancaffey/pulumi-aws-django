@@ -1,7 +1,6 @@
 import * as aws from "@pulumi/aws"
 import * as pulumi from "@pulumi/pulumi";
 import { IamResources } from "../../internal/iam/ecs";
-import { RedisEcsResources } from "../../internal/ecs/redis";
 import { WebEcsService } from "../../internal/ecs/web";
 import { WebEcsServiceWithNginx } from "../../internal/ecs/webWithNginx";
 import { ManagementCommandTask } from "../../internal/ecs/managementCommand";
@@ -18,7 +17,7 @@ registerAutoTags({
 /**
  * The inputs needed for setting up and ad hoc environment
  */
-interface AdHocAppComponentProps {
+interface EcsAppComponentProps {
   vpcId: pulumi.Output<string>;
   assetsBucketName: pulumi.Output<string>;
   privateSubnets: pulumi.Output<string[]>;
@@ -26,8 +25,8 @@ interface AdHocAppComponentProps {
   albSgId: pulumi.Output<string>;
   listenerArn: pulumi.Output<string>;
   albDnsName: pulumi.Output<string>;
-  serviceDiscoveryNamespaceId: pulumi.Output<string>;
   rdsAddress: pulumi.Output<string>;
+  elastiCacheAddress: pulumi.Output<string>;
   domainName: pulumi.Output<string>;
   baseStackName: pulumi.Output<string>;
 }
@@ -36,7 +35,7 @@ interface AdHocAppComponentProps {
  * Resource for ad hoc app environment
  * Includes ECS Resources (Redis, API, Frontend, Celery, Beat, ECS Tasks, Route53 Records)
  */
-export class AdHocAppComponent extends pulumi.ComponentResource {
+export class EcsAppComponent extends pulumi.ComponentResource {
   public readonly url: string;
   public readonly backendUpdateScript?: pulumi.Output<string>;
   private readonly clusterId: pulumi.Output<string>;
@@ -44,11 +43,11 @@ export class AdHocAppComponent extends pulumi.ComponentResource {
   /**
    * Creates resources for ad hoc application environments
    * @param name The _unique_ name of the resource.
-   * @param props Props to pass to AdHocBaseEnv component
+   * @param props Props to pass to EcsApp component
    * @param opts A bag of options that control this resource's behavior.
    */
-  constructor(name: string, props: AdHocAppComponentProps, opts?: pulumi.ResourceOptions) {
-    super("pulumi-contrib:components:AdHocApp", name, props, opts);
+  constructor(name: string, props: EcsAppComponentProps, opts?: pulumi.ResourceOptions) {
+    super("pulumi-contrib:components:EcsApp", name, props, opts);
 
     const stackName = pulumi.getStack();
     const hostName = props.domainName.apply(x => `${stackName}.${x}`)
@@ -65,7 +64,7 @@ export class AdHocAppComponent extends pulumi.ComponentResource {
     const accountId = process.env.AWS_ACCOUNT_ID;
 
     // ECR images
-    // latest tags are only used for the initial deployment of the ad hoc application environment
+    // latest tags are only used for the initial deployment of the ECS application environment
     // TODO: lookup from ecr.getRepo / ecr.getImage?
     const backendImage = `${accountId}.dkr.ecr.us-east-1.amazonaws.com/backend`;
     const frontendImage = `${accountId}.dkr.ecr.us-east-1.amazonaws.com/frontend`;
@@ -85,19 +84,20 @@ export class AdHocAppComponent extends pulumi.ComponentResource {
     // https://gist.github.com/AaronFriel/fa4d88781f339c2c26791a08b9c50c0e
     const hosts = pulumi.all([
       props.rdsAddress,
+      props.elastiCacheAddress,
       props.baseStackName,
       props.domainName,
       props.assetsBucketName
     ]);
 
-    let envVars = hosts.apply(([pgHost, baseStackName, domainName, assetsBucketName]) => [
+    let envVars = hosts.apply(([pgHost, elastiCacheAddress, baseStackName, domainName, assetsBucketName]) => [
       {
         name: "S3_BUCKET_NAME",
         value: assetsBucketName,
       },
       {
         name: "REDIS_SERVICE_HOST",
-        value: `${stackName}-redis.${baseStackName}-sd-ns`
+        value: elastiCacheAddress,
       },
       {
         name: "POSTGRES_SERVICE_HOST",
@@ -148,18 +148,6 @@ export class AdHocAppComponent extends pulumi.ComponentResource {
       records: [pulumi.interpolate `${props.albDnsName}`]
     }, { parent: this });
 
-    const redis = new RedisEcsResources("RedisEcsResources", {
-      name: "redis",
-      image: "redis:5.0.3-alpine",
-      privateSubnetIds: props.privateSubnets,
-      port: 6379,
-      ecsClusterId: this.clusterId,
-      appSgId: props.appSgId,
-      executionRoleArn: iamResources.taskExecutionRole.arn,
-      taskRoleArn: iamResources.ecsTaskRole.arn,
-      serviceDiscoveryNamespaceId: props.serviceDiscoveryNamespaceId,
-    }, { parent: this });
-
     const apiService = new WebEcsServiceWithNginx("ApiWebService", {
       nginxImage: nginxImage,
       nginxPort: 443,
@@ -180,7 +168,8 @@ export class AdHocAppComponent extends pulumi.ComponentResource {
       taskRoleArn: iamResources.ecsTaskRole.arn,
     }, { parent: this });
 
-    const frontendService = new WebEcsService("FrontendWebService", {
+    // const frontendService =
+    new WebEcsService("FrontendWebService", {
       // defined locally
       name: "frontend",
       command: ["nginx", "-g", "daemon off;"],
@@ -202,7 +191,8 @@ export class AdHocAppComponent extends pulumi.ComponentResource {
       dependsOn: [apiService]
     });
 
-    const workerService = new WorkerEcsService("WorkerService", {
+    // const workerService =
+    new WorkerEcsService("WorkerService", {
       name: "default",
       command: ["celery", "--app=backend.celery_app:app", "worker", "--loglevel=INFO", "-Q", "default"],
       envVars,
@@ -214,7 +204,8 @@ export class AdHocAppComponent extends pulumi.ComponentResource {
       taskRoleArn: iamResources.ecsTaskRole.arn,
     }, { parent: this });
 
-    const schedulerService = new SchedulerEcsService("SchedulerService", {
+    // const schedulerService =
+    new SchedulerEcsService("SchedulerService", {
       name: "beat",
       command: ["celery", "--app=backend.celery_app:app", "beat", "--loglevel=INFO"],
       envVars,

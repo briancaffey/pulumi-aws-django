@@ -2,7 +2,6 @@ import * as aws from "@pulumi/aws"
 import * as awsx from "@pulumi/awsx";
 import * as pulumi from "@pulumi/pulumi";
 import { AlbResources } from "../../internal/alb";
-import { BastionHostResources } from '../../internal/bastion';
 import { RdsResources } from '../../internal/rds';
 import { ElastiCacheResources } from '../../internal/elasticache'
 import { registerAutoTags } from "../../../util";
@@ -100,12 +99,5 @@ export class ProdBaseEnvComponent extends pulumi.ComponentResource {
     }, { parent: this });
     this.elastiCacheCluster = elastiCacheResources.elastiCacheCluster;
 
-
-    const bastionHost = new BastionHostResources("BastionHostResources", {
-      appSgId: securityGroupResources.appSecurityGroup.id,
-      rdsAddress: rdsResources.databaseInstance.address,
-      privateSubnet: vpc.privateSubnetIds[0]
-    }, { parent: this });
-    this.bastionHostInstanceId = bastionHost.instanceId;
   }
 }

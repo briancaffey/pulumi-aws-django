@@ -9,7 +9,6 @@ A ad hoc `base` environment contains resources that are shared by ad hoc `app` e
 - ALB SG
 - App SG
 - Load Balancer
-- ServiceDiscoveryNamespace
 - RDS
   - RDS SG
   - DB Subnet Group

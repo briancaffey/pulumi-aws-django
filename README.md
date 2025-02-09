@@ -8,17 +8,17 @@ This is a library for deploying Django applications to AWS using ECS Fargate.
 brew install pulumi/tap/pulumi
 ```
 
-This repo contains two examples: `ad-hoc` and `base`.
+This repo contains two examples: `ecs` and `base`.
 
 The `Makefile` documents commands for setting up these environments:
 
 ```
-ad-hoc-base-init
-ad-hoc-base-preview
-ad-hoc-base-up
-ad-hoc-base-refresh
-ad-hoc-base-destroy
-ad-hoc-base-rm
+ecs-base-init
+ecs-base-preview
+ecs-base-up
+ecs-base-refresh
+ecs-base-destroy
+ecs-base-rm
 ```
 
 There are similar libraries for CDK and Terraform:

@@ -1,0 +1,3 @@
+name: ecs-base
+runtime: nodejs
+description: ECS base infrastructure

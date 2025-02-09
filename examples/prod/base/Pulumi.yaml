@@ -1,3 +1,0 @@
-name: prod-base
-runtime: nodejs
-description: A Pulumi program for base production infrastructure
