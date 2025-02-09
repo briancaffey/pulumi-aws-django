@@ -79,6 +79,7 @@ export class RdsResources extends pulumi.ComponentResource {
     // Create the Secrets Manager secret with a name derived from the stack and suffix.
     const secret = new aws.secretsmanager.Secret("secret", {
       name: pulumi.interpolate`${stackName}/rds-password/${suffix.result}`,
+      recoveryWindowInDays: 0,
     });
     this.rdsPasswordSecretName = secret.name
 
