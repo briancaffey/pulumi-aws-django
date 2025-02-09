@@ -60,9 +60,6 @@ export class EcsBaseEnvComponent extends pulumi.ComponentResource {
       },
     }, { parent: this });
     this.vpc = vpc;
-    // const privateRouteTableIds = vpc.subnets.map(subnet => subnet.routeTable.id);
-    const privateRouteTableIds = vpc.subnets.get()
-
 
     const assetsBucket = new aws.s3.Bucket("assetsBucket", {
       bucket: `${props.domainName.replace(".", "-")}-${stackName}-assets-bucket`,

@@ -67,7 +67,8 @@ export class ProdBaseEnvComponent extends pulumi.ComponentResource {
     this.assetsBucket = assetsBucket;
 
     const securityGroupResources = new SecurityGroupResources("SecurityGroupResources", {
-      vpcId: vpc.vpcId
+      vpcId: vpc.vpcId,
+      privateSubnetIds: vpc.privateSubnetIds,
     }, { parent: this });
     this.appSecurityGroup = securityGroupResources.appSecurityGroup;
     this.albSecurityGroup = securityGroupResources.albSecurityGroup;
