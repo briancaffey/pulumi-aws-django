@@ -36,7 +36,7 @@ export class ProdBaseEnvComponent extends pulumi.ComponentResource {
   public readonly domainName: string;
   public readonly listener: aws.alb.Listener;
   public readonly stackName: string;
-  public readonly bastionHostInstanceId?: pulumi.Output<string>;
+  public readonly rdsPasswordSecretName: pulumi.Output<string>;
   public readonly elastiCacheCluster: aws.elasticache.Cluster;
 
   /**
@@ -85,12 +85,12 @@ export class ProdBaseEnvComponent extends pulumi.ComponentResource {
 
     const rdsResources = new RdsResources("RdsResources", {
       appSgId: securityGroupResources.appSecurityGroup.id,
-      dbSecretName: "DB_SECRET_NAME",
       port: 5432,
       vpcId: vpc.vpcId,
       privateSubnetIds: vpc.privateSubnetIds
     }, { parent: this });
     this.databaseInstance = rdsResources.databaseInstance;
+    this.rdsPasswordSecretName = rdsResources.rdsPasswordSecretName;
 
     const elastiCacheResources = new ElastiCacheResources("ElastiCacheResources", {
       vpcId: vpc.vpcId,

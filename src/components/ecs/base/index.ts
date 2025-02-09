@@ -36,6 +36,7 @@ export class EcsBaseEnvComponent extends pulumi.ComponentResource {
   public readonly listener: aws.alb.Listener;
   public readonly stackName: string;
   public readonly elastiCacheCluster: aws.elasticache.Cluster;
+  public readonly rdsPasswordSecretName: pulumi.Output<string>;
 
   /**
    * Creates base resources to support ad hoc application environments
@@ -86,12 +87,12 @@ export class EcsBaseEnvComponent extends pulumi.ComponentResource {
 
     const rdsResources = new RdsResources("RdsResources", {
       appSgId: securityGroupResources.appSecurityGroup.id,
-      dbSecretName: "DB_SECRET_NAME",
       port: 5432,
       vpcId: vpc.vpcId,
       privateSubnetIds: vpc.privateSubnetIds
     }, { parent: this });
     this.databaseInstance = rdsResources.databaseInstance;
+    this.rdsPasswordSecretName = rdsResources.rdsPasswordSecretName;
 
     const elastiCacheResources = new ElastiCacheResources("ElastiCacheResources", {
       vpcId: vpc.vpcId,

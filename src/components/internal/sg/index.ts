@@ -17,31 +17,32 @@ export class SecurityGroupResources extends pulumi.ComponentResource {
    */
   constructor(name: string, props: SecurityGroupResourcesProps, opts?: pulumi.ResourceOptions) {
     super(`pulumi-contrib:components:SecurityGroupResources`, name, props, opts);
-    const region = aws.getRegionOutput();
+    const region = aws.getRegionOutput().name;
+    const stackName = pulumi.getStack();
 
     // Security Groups
     const albSecurityGroup = new aws.ec2.SecurityGroup("albSecurityGroup", {
-      name: pulumi.interpolate`${pulumi.getStack()}-alb-sg`,
+      name: pulumi.interpolate`${stackName}-alb-sg`,
       description: "ALB security group",
       vpcId: props.vpcId,
-      tags: { Name: pulumi.interpolate`${pulumi.getStack()}-alb-sg` },
+      tags: { Name: pulumi.interpolate`${stackName}-alb-sg` },
     });
     this.albSecurityGroup = albSecurityGroup;
 
     const appSecurityGroup = new aws.ec2.SecurityGroup("appSecurityGroup", {
-      name: pulumi.interpolate`${pulumi.getStack()}-app-sg`,
+      name: pulumi.interpolate`${stackName}-app-sg`,
       description: "Allows inbound access from the ALB only",
       vpcId: props.vpcId,
-      tags: { Name: pulumi.interpolate`${pulumi.getStack()}-ecs-sg` },
+      tags: { Name: pulumi.interpolate`${stackName}-ecs-sg` },
     });
     this.appSecurityGroup = appSecurityGroup;
 
     // VPC endpoint security group
     const vpceSecurityGroup = new aws.ec2.SecurityGroup("vpceSecurityGroup", {
-      name: pulumi.interpolate`${pulumi.getStack()}-vpce-sg`,
+      name: pulumi.interpolate`${stackName}-vpce-sg`,
       description: "Security Group for VPC Endpoints (ECR API, ECR DKR, S3, Secrets Manager",
       vpcId: props.vpcId,
-      tags: { Name: pulumi.interpolate`${pulumi.getStack()}-vpce-sg` },
+      tags: { Name: pulumi.interpolate`${stackName}-vpce-sg` },
     });
 
     // VPC Endpoints
@@ -54,7 +55,7 @@ export class SecurityGroupResources extends pulumi.ComponentResource {
       securityGroupIds: [vpceSecurityGroup.id],
       privateDnsEnabled: true,
       tags: {
-          Name: pulumi.interpolate`${pulumi.getStack()}-vpce-ecr-api`,
+          Name: pulumi.interpolate`${stackName}-vpce-ecr-api`,
       },
     });
 
@@ -66,7 +67,7 @@ export class SecurityGroupResources extends pulumi.ComponentResource {
       securityGroupIds: [vpceSecurityGroup.id],
       privateDnsEnabled: true,
       tags: {
-          Name: pulumi.interpolate`${pulumi.getStack()}-vpce-ecr-dkr`,
+          Name: pulumi.interpolate`${stackName}-vpce-ecr-dkr`,
       },
     });
 
@@ -87,7 +88,7 @@ export class SecurityGroupResources extends pulumi.ComponentResource {
       vpcEndpointType: "Gateway",
       routeTableIds: privateRouteTableIds,
       tags: {
-          Name: pulumi.interpolate`${pulumi.getStack()}-s3`,
+          Name: pulumi.interpolate`${stackName}-s3`,
       },
     });
 
@@ -113,7 +114,6 @@ export class SecurityGroupResources extends pulumi.ComponentResource {
 
     const albIngressRuleHttp = new aws.vpc.SecurityGroupIngressRule("albIngressRuleHttp", {
       securityGroupId: appSecurityGroup.id,
-      referencedSecurityGroupId: albSecurityGroup.id,
       ipProtocol: "tcp",
       fromPort: 80,
       toPort: 80,
@@ -123,7 +123,6 @@ export class SecurityGroupResources extends pulumi.ComponentResource {
 
     const albIngressRuleHttps = new aws.vpc.SecurityGroupIngressRule("albIngressRuleHttps", {
       securityGroupId: appSecurityGroup.id,
-      referencedSecurityGroupId: albSecurityGroup.id,
       ipProtocol: "tcp",
       fromPort: 443,
       toPort: 443,

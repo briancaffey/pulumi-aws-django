@@ -6,7 +6,6 @@ interface RdsResourcesProps {
   vpcId: pulumi.Output<string>;
   privateSubnetIds: pulumi.Output<string[]>;
   appSgId: pulumi.Output<string>;
-  dbSecretName: string;
   port: number;
 }
 
@@ -54,7 +53,7 @@ export class RdsResources extends pulumi.ComponentResource {
 
     const dbParameterGroup = new aws.rds.ParameterGroup("DbParameterGroup", {
       name: `${stackName}parametergroup`,
-      family: "postgres13",
+      family: "postgres17",
       parameters: [
         {
           name: "rds.force_ssl",
