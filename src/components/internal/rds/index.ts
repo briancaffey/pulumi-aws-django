@@ -1,5 +1,6 @@
 import * as aws from "@pulumi/aws"
 import * as pulumi from "@pulumi/pulumi";
+import * as random from "@pulumi/random";
 
 interface RdsResourcesProps {
   vpcId: pulumi.Output<string>;
@@ -11,6 +12,7 @@ interface RdsResourcesProps {
 
 export class RdsResources extends pulumi.ComponentResource {
   public databaseInstance: aws.rds.Instance;
+  public rdsPasswordSecretName: pulumi.Output<string>;
   /**
    * Creates a new static website hosted on AWS.
    * @param name The _unique_ name of the resource.
@@ -61,17 +63,41 @@ export class RdsResources extends pulumi.ComponentResource {
       ],
     }, { parent: this });
 
+    // secret
+    const rdsPassword = new random.RandomPassword("rdsPassword", {
+      length: 16,
+      special: true,
+      overrideSpecial: "_!%^",
+    });
+
+    const suffix = new random.RandomString("suffix", {
+      length: 8,
+      special: false,
+      upper: false,
+    });
+
+    // Create the Secrets Manager secret with a name derived from the stack and suffix.
+    const secret = new aws.secretsmanager.Secret("secret", {
+      name: pulumi.interpolate`${stackName}/rds-password/${suffix.result}`,
+    });
+    this.rdsPasswordSecretName = secret.name
+
+    // Create a Secrets Manager secret version that contains the RDS password.
+    const secretVersion = new aws.secretsmanager.SecretVersion("secretVersion", {
+      secretId: secret.id,
+      secretString: rdsPassword.result,
+    });
+
     // instance
     const dbInstance = new aws.rds.Instance("DbInstance", {
       identifier: `${stackName}-rds`,
       instanceClass: "db.t3.micro",
       vpcSecurityGroupIds: [rdsSecurityGroup.id],
-      caCertIdentifier: "rds-ca-2019",
       engine: "postgres",
-      engineVersion: "13.7",
+      engineVersion: "17.2",
       port: props.port,
       username: "postgres",
-      password: "postgres",
+      password: pulumi.interpolate`${secretVersion.secretString}`,
       allocatedStorage: 20,
       storageEncrypted: false,
       multiAz: false,

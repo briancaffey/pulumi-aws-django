@@ -14,9 +14,6 @@ registerAutoTags({
   "env": pulumi.getStack(),
 });
 
-/**
- * The inputs needed for setting up and ad hoc environment
- */
 interface EcsAppComponentProps {
   vpcId: pulumi.Output<string>;
   assetsBucketName: pulumi.Output<string>;
@@ -32,8 +29,8 @@ interface EcsAppComponentProps {
 }
 
 /**
- * Resource for ad hoc app environment
- * Includes ECS Resources (Redis, API, Frontend, Celery, Beat, ECS Tasks, Route53 Records)
+ * Resource for ECS environment
+ * Includes ECS Resources (API, Frontend, Celery, Beat, ECS Tasks, Route53 Records)
  */
 export class EcsAppComponent extends pulumi.ComponentResource {
   public readonly url: string;
@@ -41,7 +38,7 @@ export class EcsAppComponent extends pulumi.ComponentResource {
   private readonly clusterId: pulumi.Output<string>;
 
   /**
-   * Creates resources for ad hoc application environments
+   * Creates resources for ECS application environments
    * @param name The _unique_ name of the resource.
    * @param props Props to pass to EcsApp component
    * @param opts A bag of options that control this resource's behavior.
@@ -72,12 +69,9 @@ export class EcsAppComponent extends pulumi.ComponentResource {
 
     // ECS Cluster and Cluster Capacity Providers
     const ecsClusterResources = new EcsClusterResources("EcsClusterResources", {
-      useSpot: true // default to using spot for ad hoc environments
+      useSpot: true // TODO: add this is a parameter
     }, { parent: this });
     this.clusterId = ecsClusterResources.clusterId;
-
-    // S3
-    // TODO: add optional per-ad hoc environment S3 bucket to use instead of shared S3 bucket from base stack
 
     // env vars to use in backend container
     // https://github.com/pulumi/examples/blob/master/aws-ts-airflow/index.ts#L61
