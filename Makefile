@@ -1,6 +1,9 @@
 build:
 	yarn build
 
+ecs-base-build:
+	cd examples/ecs/base && yarn build
+
 ecs-base-init:	build
 	pulumi -C examples/ecs/base stack init dev
 

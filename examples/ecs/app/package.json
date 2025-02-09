@@ -2,11 +2,15 @@
     "name": "app",
     "main": "index.ts",
     "devDependencies": {
-        "@types/node": "^14"
+        "@types/node": "^20"
     },
     "dependencies": {
-        "@pulumi/pulumi": "^3.51.0",
-        "@pulumi/aws": "^5.0.0",
-        "@pulumi/awsx": "^1.0.0"
+        "@pulumi/aws": "^6.67.0",
+        "@pulumi/awsx": "^2.21.0",
+        "@pulumi/pulumi": "^3.147.0",
+        "typescript": "^5.7.3"
+    },
+    "scripts": {
+        "build": "tsc"
     }
 }
