@@ -87,24 +87,16 @@ export class EcsAppComponent extends pulumi.ComponentResource {
 
     let envVars = hosts.apply(([rdsAddress, elastiCacheAddress, baseStackName, domainName, assetsBucketName, rdsPasswordSecretName]) => [
       {
+        name: "APP_NAME",
+        value: stackName,
+      },
+      {
+        name: "BASE_STACK_NAME",
+        value: baseStackName,
+      },
+      {
         name: "DB_SECRET_NAME",
         value: rdsPasswordSecretName,
-      },
-      {
-        name: "S3_BUCKET_NAME",
-        value: assetsBucketName,
-      },
-      {
-        name: "REDIS_SERVICE_HOST",
-        value: elastiCacheAddress,
-      },
-      {
-        name: "POSTGRES_SERVICE_HOST",
-        value: rdsAddress,
-      },
-      {
-        name: "POSTGRES_NAME",
-        value: `${stackName}-db`
       },
       {
         name: "DJANGO_SETTINGS_MODULE",
@@ -119,20 +111,28 @@ export class EcsAppComponent extends pulumi.ComponentResource {
         value: `https://${stackName}.${domainName}`,
       },
       {
-        name: "SENTRY_DSN",
-        value: ""
-      },
-      {
         name: "NVIDIA_API_KEY",
         value: ""
       },
       {
-        name: "APP_NAME",
-        value: stackName,
+        name: "POSTGRES_NAME",
+        value: `${stackName}-db`
       },
       {
-        name: "BASE_STACK_NAME",
-        value: baseStackName,
+        name: "POSTGRES_SERVICE_HOST",
+        value: rdsAddress,
+      },
+      {
+        name: "REDIS_SERVICE_HOST",
+        value: elastiCacheAddress,
+      },
+      {
+        name: "S3_BUCKET_NAME",
+        value: assetsBucketName,
+      },
+      {
+        name: "SENTRY_DSN",
+        value: ""
       },
     ]);
 
@@ -157,7 +157,7 @@ export class EcsAppComponent extends pulumi.ComponentResource {
 
     const apiService = new WebEcsService("ApiWebService", {
       name: "gunicorn", // NOTE: this value (and others below) is hard-coded in GitHub Actions
-      command: ["gunicorn", "-t", "1000", "-b", "0.0.0.0:8000", "--log-level", "info", "backend.wsgi"],
+      command: ["gunicorn", "-t", "1000", "-b", "0.0.0.0:8000", "--log-level", "debug", "backend.wsgi"],
       envVars,
       port: 8000,
       healthCheckPath: "/api/health-check/",
