@@ -16,3 +16,4 @@ export const rdsAddress = adHocBaseEnv.databaseInstance.address;
 export const domainName = adHocBaseEnv.domainName;
 export const baseStackName = adHocBaseEnv.stackName;
 export const rdsPasswordSecretName = adHocBaseEnv.rdsPasswordSecretName;
+export const redisServiceHost = adHocBaseEnv.redisServiceHost;

@@ -13,7 +13,7 @@ const appSgId = stackReference.getOutput("appSgId") as pulumi.Output<string>;
 const albSgId = stackReference.getOutput("albSgId") as pulumi.Output<string>;
 const listenerArn = stackReference.getOutput("listenerArn") as pulumi.Output<string>;
 const albDnsName = stackReference.getOutput("albDnsName") as pulumi.Output<string>;
-const elastiCacheAddress = stackReference.getOutput("elastiCacheAddress") as pulumi.Output<string>;
+const redisServiceHost = stackReference.getOutput("redisServiceHost") as pulumi.Output<string>;
 const rdsAddress = stackReference.getOutput("rdsAddress") as pulumi.Output<string>;
 const domainName = stackReference.getOutput("domainName") as pulumi.Output<string>;
 const baseStackName = stackReference.getOutput("baseStackName") as pulumi.Output<string>;
@@ -27,7 +27,7 @@ const ecsAppComponent = new EcsAppComponent("EcsAppComponent", {
   appSgId,
   albSgId,
   listenerArn,
-  elastiCacheAddress,
+  redisServiceHost,
   albDnsName,
   rdsAddress,
   domainName,

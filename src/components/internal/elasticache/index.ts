@@ -9,7 +9,7 @@ interface ElastiCacheResourcesProps {
 }
 
 export class ElastiCacheResources extends pulumi.ComponentResource {
-  public elastiCacheCluster: aws.elasticache.Cluster;
+  public redisServiceHost: pulumi.Output<string>;
   /**
    * Creates an ElastiCache cluster that runs redis
    * @param name The _unique_ name of the resource.
@@ -54,6 +54,10 @@ export class ElastiCacheResources extends pulumi.ComponentResource {
       subnetGroupName: elastiCacheSubnetGroup.name,
       securityGroupIds: [elastiCacheSecurityGroup.id]
     }, { parent: this });
-    this.elastiCacheCluster = elastiCacheCluster;
+
+    const redisServiceHost = elastiCacheCluster.cacheNodes.apply(
+      cacheNodes => cacheNodes[0].address
+    );
+    this.redisServiceHost = redisServiceHost;
   }
 }

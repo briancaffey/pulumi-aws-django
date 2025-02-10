@@ -1,7 +1,2 @@
 config:
   aws:region: us-east-1
-  extraEnvVars:
-    - name: FOO
-      value: BAR
-    - name: BIZ
-      value: BUZ

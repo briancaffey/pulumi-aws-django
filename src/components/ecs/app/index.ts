@@ -22,7 +22,7 @@ interface EcsAppComponentProps {
   listenerArn: pulumi.Output<string>;
   albDnsName: pulumi.Output<string>;
   rdsAddress: pulumi.Output<string>;
-  elastiCacheAddress: pulumi.Output<string>;
+  redisServiceHost: pulumi.Output<string>;
   domainName: pulumi.Output<string>;
   baseStackName: pulumi.Output<string>;
   rdsPasswordSecretName: pulumi.Output<string>;
@@ -78,14 +78,14 @@ export class EcsAppComponent extends pulumi.ComponentResource {
     // https://gist.github.com/AaronFriel/fa4d88781f339c2c26791a08b9c50c0e
     const hosts = pulumi.all([
       props.rdsAddress,
-      props.elastiCacheAddress,
+      props.redisServiceHost,
       props.baseStackName,
       props.domainName,
       props.assetsBucketName,
       props.rdsPasswordSecretName,
     ]);
 
-    let envVars = hosts.apply(([rdsAddress, elastiCacheAddress, baseStackName, domainName, assetsBucketName, rdsPasswordSecretName]) => [
+    let envVars = hosts.apply(([rdsAddress, redisServiceHost, baseStackName, domainName, assetsBucketName, rdsPasswordSecretName]) => [
       {
         name: "APP_NAME",
         value: stackName,
@@ -124,7 +124,7 @@ export class EcsAppComponent extends pulumi.ComponentResource {
       },
       {
         name: "REDIS_SERVICE_HOST",
-        value: elastiCacheAddress,
+        value: redisServiceHost,
       },
       {
         name: "S3_BUCKET_NAME",
@@ -134,6 +134,10 @@ export class EcsAppComponent extends pulumi.ComponentResource {
         name: "SENTRY_DSN",
         value: ""
       },
+      {
+        name: "Z",
+        value: "z"
+      }
     ]);
 
     // if (extraEnvVars) {

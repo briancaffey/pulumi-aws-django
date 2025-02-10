@@ -23,19 +23,22 @@ ecs-base-rm:	build
 	pulumi -C examples/ecs/base stack rm dev --yes
 
 ecs-app-init:	build
-	pulumi -C examples/ecs/app stack init alpha || true
+	pulumi -C examples/ecs/app stack init beta || true
 
 ecs-app-preview:	build
-	pulumi -C examples/ecs/app --stack alpha --non-interactive preview
+	pulumi -C examples/ecs/app --stack beta --non-interactive preview
 
 ecs-app-preview-diff:	build
-	pulumi -C examples/ecs/app --stack alpha --non-interactive preview --diff
+	pulumi -C examples/ecs/app --stack beta --non-interactive preview --diff
 
 ecs-app-up:	build
 	pulumi -C examples/ecs/app --non-interactive up --yes
 
 ecs-app-destroy:	build
-	pulumi -C examples/ecs/app --stack alpha --non-interactive destroy --yes
+	pulumi -C examples/ecs/app --stack beta --non-interactive destroy --yes
+
+ecs-app-rm:	build
+	pulumi -C examples/ecs/app stack rm beta --yes
 
 prod-base-preview:	build
 	pulumi -C examples/prod/base --stack stage --non-interactive preview
