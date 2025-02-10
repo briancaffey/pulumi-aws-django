@@ -1,5 +1,28 @@
 # Changelog
 
+## [1.28.0](https://github.com/briancaffey/pulumi-aws-django/compare/v1.27.0...v1.28.0) (2025-02-10)
+
+
+### Features
+
+* **docs:** update readme.md ([8cae247](https://github.com/briancaffey/pulumi-aws-django/commit/8cae247d4c63d2c2188d0ce081ce520f19aceff1))
+* **ecs:** refactor ecs components and remove ad hoc component and example ([b3ae298](https://github.com/briancaffey/pulumi-aws-django/commit/b3ae2986f631bfee20763d6068dc1eaf901ba83a))
+* **rds:** update rds component to use secrets manager secret ([d1f80b0](https://github.com/briancaffey/pulumi-aws-django/commit/d1f80b00c13900243c1f9641afd3488562b05dcf))
+
+
+### Bug Fixes
+
+* **deps:** update dependencies for example Pulumi projects ([04dc94c](https://github.com/briancaffey/pulumi-aws-django/commit/04dc94cf392d25605688be7ae5a24632267cc40e))
+* **docs:** remove references to ad hoc environments ([70c4063](https://github.com/briancaffey/pulumi-aws-django/commit/70c40633a2afef031297c20f3a65d2edd8fc91f8))
+* **ecs:** fix order of env vars to avoid large diffs in pulumi preview ([ad25c9d](https://github.com/briancaffey/pulumi-aws-django/commit/ad25c9d334bc93322788e7b18045f05f229d588b))
+* **ecs:** fixes for ecs base and app components ([c466e3c](https://github.com/briancaffey/pulumi-aws-django/commit/c466e3c8779ffd74cbdbb87e1e2741f08c966548))
+* **ecs:** remove unused code ([b236769](https://github.com/briancaffey/pulumi-aws-django/commit/b236769b8cb5e8d71a18a787602abfb79b62e3be))
+* **elasticache:** fix issue with elasticache output and remove prod components ([e435671](https://github.com/briancaffey/pulumi-aws-django/commit/e4356713fa285106fc6058d387462ea0f44a93f7))
+* **rds:** add rds password secret name output to base component ([2faf9cd](https://github.com/briancaffey/pulumi-aws-django/commit/2faf9cda1c7761ce508a074a24f33de00b304aca))
+* **rds:** set recoveryWindowInDays to 0 ([ffda59f](https://github.com/briancaffey/pulumi-aws-django/commit/ffda59f30aba76a22d8cad44290080715e97f929))
+* **sg:** fix alb security group by referencing correct sg ([1cad6fa](https://github.com/briancaffey/pulumi-aws-django/commit/1cad6fa7fcbd1099a82f043bfff75af2cca3d36d))
+* **web-ui:** add backend api base to env vars for web-ui container ([7291180](https://github.com/briancaffey/pulumi-aws-django/commit/7291180305eb3327a6c6293162c5c68c1ce8a63d))
+
 ## [1.27.0](https://github.com/briancaffey/pulumi-aws-django/compare/v1.26.0...v1.27.0) (2025-01-27)
 
 
