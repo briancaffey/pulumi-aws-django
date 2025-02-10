@@ -89,7 +89,7 @@ export class SchedulerEcsService extends pulumi.ComponentResource {
         },
       ],
       networkConfiguration: {
-        assignPublicIp: true,
+        assignPublicIp: false,
         securityGroups: [props.appSgId],
         subnets: props.privateSubnetIds
       }

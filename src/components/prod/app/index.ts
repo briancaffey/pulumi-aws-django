@@ -37,7 +37,6 @@ interface ProdAppComponentProps {
  */
 export class ProdAppComponent extends pulumi.ComponentResource {
   public readonly url: string;
-  public readonly backendUpdateScript?: pulumi.Output<string>;
   private readonly clusterId: pulumi.Output<string>;
 
   /**
@@ -226,6 +225,5 @@ export class ProdAppComponent extends pulumi.ComponentResource {
       executionRoleArn: iamResources.taskExecutionRole.arn,
       taskRoleArn: iamResources.ecsTaskRole.arn,
     }, { parent: this });
-    this.backendUpdateScript = backendUpdateTask.executionScript;
   }
 }

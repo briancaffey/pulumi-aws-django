@@ -59,14 +59,36 @@ export class EcsBaseEnvComponent extends pulumi.ComponentResource {
       natGateways: {
         strategy: awsx.ec2.NatGatewayStrategy.Single,
       },
+      tags: {
+        env: pulumi.getStack()
+      }
     }, { parent: this });
     this.vpc = vpc;
 
+
+    // TODO: move S3 to S3Resources component
     const assetsBucket = new aws.s3.Bucket("assetsBucket", {
       bucket: `${props.domainName.replace(".", "-")}-${stackName}-assets-bucket`,
       forceDestroy: true
     }, { parent: this });
     this.assetsBucket = assetsBucket;
+
+    // Enforce bucket ownership (disables ACLs)
+    const bucketOwnershipControls = new aws.s3.BucketOwnershipControls("ownershipControls", {
+      bucket: assetsBucket.id,
+      rule: {
+          objectOwnership: "ObjectWriter",
+      },
+    });
+
+    // Configure Public Access Block settings (equivalent to `blockPublicAccess`)
+    const bucketPublicAccessBlock = new aws.s3.BucketPublicAccessBlock("assetsBucketAccess", {
+      bucket: assetsBucket.id,
+      blockPublicAcls: false,
+      blockPublicPolicy: false,
+      ignorePublicAcls: false,
+      restrictPublicBuckets: false,
+    });
 
     const securityGroupResources = new SecurityGroupResources("SecurityGroupResources", {
       vpcId: vpc.vpcId,

@@ -38,6 +38,7 @@ export class WebEcsService extends pulumi.ComponentResource {
   private pathPatterns: string[];
   public readonly listenerRule: aws.alb.ListenerRule;
   public readonly serviceName: pulumi.Output<string>;
+  public readonly ssmAccessCommand: pulumi.Output<string>;
 
   /**
    * Creates a load balanced fargate service and associated CloudWatch resources
@@ -54,7 +55,7 @@ export class WebEcsService extends pulumi.ComponentResource {
     this.cpu = props.cpu ?? "256";
     this.memory = props.memory ?? "512";
     this.logRetentionInDays = props.logRetentionInDays ?? 1;
-    this.healthCheckInterval = props.healthCheckInterval ?? 5;
+    this.healthCheckInterval = props.healthCheckInterval ?? 7;
     this.healthCheckHealthyThreshold = props.healthCheckHealthyThreshold ?? 2;
     this.pathPatterns = props.pathPatterns ?? ["/*"];
 
@@ -105,7 +106,7 @@ export class WebEcsService extends pulumi.ComponentResource {
       targetType: "ip",
       vpcId: props.vpcId,
       healthCheck: {
-        timeout: 2,
+        timeout: 5,
         protocol: "HTTP",
         port: "traffic-port",
         path: props.healthCheckPath,
@@ -140,7 +141,7 @@ export class WebEcsService extends pulumi.ComponentResource {
         containerPort: props.port
       }],
       networkConfiguration: {
-        assignPublicIp: true,
+        assignPublicIp: false,
         securityGroups: [props.appSgId],
         subnets: props.privateSubnets
       }
@@ -170,5 +171,15 @@ export class WebEcsService extends pulumi.ComponentResource {
       ]
     }, { parent: this });
     this.listenerRule = listenerRule;
+
+    // TODO get task ARN instead of task definition ARN
+    const ssmAccessCommand = pulumi.interpolate`aws ecs execute-command \
+  --cluster ${stackName}-cluster \
+  --task ${taskDefinition.arn} \
+  --container ${props.name} \
+  --command /bin/bash \
+  --interactive \
+  --region ${region.name}`
+    this.ssmAccessCommand = ssmAccessCommand;
   }
 }

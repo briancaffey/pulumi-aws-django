@@ -80,6 +80,8 @@ export CERTIFICATE_ARN=arn:aws:acm:us-east-1:111111111111:certificate/11111111-1
 export AWS_REGION=us-east-1
 export AWS_ACCESS_KEY_ID=abc
 export AWS_SESSION_TOKEN=123
+export COMPANY_NAME=abc
+export AWS_ACCOUNT_ID=123456789
 ```
 
 The `Makefile` documents the commands that can be used to set up infrastructure. Here are the commands that can be used to create and destroy the base layer of infrastructure.

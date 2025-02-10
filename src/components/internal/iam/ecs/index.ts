@@ -102,7 +102,17 @@ export class IamResources extends pulumi.ComponentResource {
           },
           {
             Effect: "Allow",
-            Action: ["secretsmanager:GetSecretValue"],
+            Action: [
+              "ses:SendEmail",
+              "ses:SendRawEmail",
+              "ses:SendBulkEmail",
+              "ses:SendBulkTemplatedEmail"
+            ],
+            Resource: ["*"]
+          },
+          {
+            Effect: "Allow",
+            Action: ["secretsmanager:GetSecretValue", "secretsmanager:DescribeSecret"],
             Resource: ["*"]
           },
           {

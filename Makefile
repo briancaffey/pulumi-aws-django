@@ -5,7 +5,7 @@ ecs-base-build:
 	cd examples/ecs/base && yarn build
 
 ecs-base-init:	build
-	pulumi -C examples/ecs/base stack init dev
+	pulumi -C examples/ecs/base stack init dev || true
 
 ecs-base-preview:	build
 	pulumi -C examples/ecs/base --stack dev --non-interactive preview
@@ -21,6 +21,9 @@ ecs-base-destroy:	build
 
 ecs-base-rm:	build
 	pulumi -C examples/ecs/base stack rm dev --yes
+
+ecs-app-init:	build
+	pulumi -C examples/ecs/app stack init alpha || true
 
 ecs-app-preview:	build
 	pulumi -C examples/ecs/app --stack alpha --non-interactive preview

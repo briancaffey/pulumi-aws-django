@@ -17,9 +17,10 @@ const elastiCacheAddress = stackReference.getOutput("elastiCacheAddress") as pul
 const rdsAddress = stackReference.getOutput("rdsAddress") as pulumi.Output<string>;
 const domainName = stackReference.getOutput("domainName") as pulumi.Output<string>;
 const baseStackName = stackReference.getOutput("baseStackName") as pulumi.Output<string>;
+const rdsPasswordSecretName = stackReference.getOutput("rdsPasswordSecretName") as pulumi.Output<string>;
 
 // ad hoc app env
-const adHocAppComponent = new EcsAppComponent("AdHocAppComponent", {
+const ecsAppComponent = new EcsAppComponent("EcsAppComponent", {
   vpcId,
   assetsBucketName,
   privateSubnets,
@@ -30,8 +31,9 @@ const adHocAppComponent = new EcsAppComponent("AdHocAppComponent", {
   albDnsName,
   rdsAddress,
   domainName,
-  baseStackName
+  baseStackName,
+  rdsPasswordSecretName,
 });
 
 // exports
-export const backendUpdateScript = adHocAppComponent.backendUpdateScript;
+export const ssmAccessCommand = ecsAppComponent.ssmAccessCommand;

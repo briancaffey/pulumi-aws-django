@@ -170,7 +170,7 @@ export class WebEcsServiceWithNginx extends pulumi.ComponentResource {
         containerPort: props.nginxPort
       }],
       networkConfiguration: {
-        assignPublicIp: true,
+        assignPublicIp: false,
         securityGroups: [props.appSgId],
         subnets: props.privateSubnets
       }

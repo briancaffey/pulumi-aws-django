@@ -2,7 +2,6 @@ import * as aws from "@pulumi/aws"
 import * as pulumi from "@pulumi/pulumi";
 import { IamResources } from "../../internal/iam/ecs";
 import { WebEcsService } from "../../internal/ecs/web";
-import { WebEcsServiceWithNginx } from "../../internal/ecs/webWithNginx";
 import { ManagementCommandTask } from "../../internal/ecs/managementCommand";
 import { WorkerEcsService } from "../../internal/ecs/celery";
 import { registerAutoTags } from "../../../util";
@@ -26,6 +25,7 @@ interface EcsAppComponentProps {
   elastiCacheAddress: pulumi.Output<string>;
   domainName: pulumi.Output<string>;
   baseStackName: pulumi.Output<string>;
+  rdsPasswordSecretName: pulumi.Output<string>;
 }
 
 /**
@@ -34,8 +34,8 @@ interface EcsAppComponentProps {
  */
 export class EcsAppComponent extends pulumi.ComponentResource {
   public readonly url: string;
-  public readonly backendUpdateScript?: pulumi.Output<string>;
   private readonly clusterId: pulumi.Output<string>;
+  public readonly ssmAccessCommand: pulumi.Output<string>;
 
   /**
    * Creates resources for ECS application environments
@@ -59,13 +59,13 @@ export class EcsAppComponent extends pulumi.ComponentResource {
     let extraEnvVars = config.getObject<EnvVar[]>("extraEnvVars");
 
     const accountId = process.env.AWS_ACCOUNT_ID;
+    const companyName = process.env.COMPANY_NAME || 'abc';
 
     // ECR images
     // latest tags are only used for the initial deployment of the ECS application environment
     // TODO: lookup from ecr.getRepo / ecr.getImage?
-    const backendImage = `${accountId}.dkr.ecr.us-east-1.amazonaws.com/backend`;
-    const frontendImage = `${accountId}.dkr.ecr.us-east-1.amazonaws.com/frontend`;
-    const nginxImage = `${accountId}.dkr.ecr.us-east-1.amazonaws.com/backend-nginx`;
+    const backendImage = `${accountId}.dkr.ecr.us-east-1.amazonaws.com/${companyName}-backend`;
+    const frontendImage = `${accountId}.dkr.ecr.us-east-1.amazonaws.com/${companyName}-frontend`;
 
     // ECS Cluster and Cluster Capacity Providers
     const ecsClusterResources = new EcsClusterResources("EcsClusterResources", {
@@ -81,10 +81,15 @@ export class EcsAppComponent extends pulumi.ComponentResource {
       props.elastiCacheAddress,
       props.baseStackName,
       props.domainName,
-      props.assetsBucketName
+      props.assetsBucketName,
+      props.rdsPasswordSecretName,
     ]);
 
-    let envVars = hosts.apply(([pgHost, elastiCacheAddress, baseStackName, domainName, assetsBucketName]) => [
+    let envVars = hosts.apply(([rdsAddress, elastiCacheAddress, baseStackName, domainName, assetsBucketName, rdsPasswordSecretName]) => [
+      {
+        name: "DB_SECRET_NAME",
+        value: rdsPasswordSecretName,
+      },
       {
         name: "S3_BUCKET_NAME",
         value: assetsBucketName,
@@ -95,7 +100,7 @@ export class EcsAppComponent extends pulumi.ComponentResource {
       },
       {
         name: "POSTGRES_SERVICE_HOST",
-        value: pgHost,
+        value: rdsAddress,
       },
       {
         name: "POSTGRES_NAME",
@@ -114,18 +119,26 @@ export class EcsAppComponent extends pulumi.ComponentResource {
         value: `https://${stackName}.${domainName}`,
       },
       {
-        name: "DB_SECRET_NAME",
-        value: "DB_SECRET_NAME",
+        name: "SENTRY_DSN",
+        value: ""
+      },
+      {
+        name: "NVIDIA_API_KEY",
+        value: ""
+      },
+      {
+        name: "APP_NAME",
+        value: stackName,
       },
       {
         name: "BASE_STACK_NAME",
-        value: baseStackName
-      }
+        value: baseStackName,
+      },
     ]);
 
-    if (extraEnvVars) {
-      envVars = envVars.apply(x => x.concat(extraEnvVars!))
-    }
+    // if (extraEnvVars) {
+    //   envVars = envVars.apply(x => x.concat(extraEnvVars!))
+    // }
 
     const iamResources = new IamResources("IamResources", {}, { parent: this });
 
@@ -139,13 +152,11 @@ export class EcsAppComponent extends pulumi.ComponentResource {
       name: pulumi.interpolate `${stackName}.${props.domainName}`,
       type: "CNAME",
       ttl: 60,
-      records: [pulumi.interpolate `${props.albDnsName}`]
+      records: [pulumi.interpolate`${props.albDnsName}`]
     }, { parent: this });
 
-    const apiService = new WebEcsServiceWithNginx("ApiWebService", {
-      nginxImage: nginxImage,
-      nginxPort: 443,
-      name: "gunicorn",
+    const apiService = new WebEcsService("ApiWebService", {
+      name: "gunicorn", // NOTE: this value (and others below) is hard-coded in GitHub Actions
       command: ["gunicorn", "-t", "1000", "-b", "0.0.0.0:8000", "--log-level", "info", "backend.wsgi"],
       envVars,
       port: 8000,
@@ -160,14 +171,15 @@ export class EcsAppComponent extends pulumi.ComponentResource {
       ecsClusterId: this.clusterId,
       executionRoleArn: iamResources.taskExecutionRole.arn,
       taskRoleArn: iamResources.ecsTaskRole.arn,
+      memory: "2048",
+      cpu: "1024"
     }, { parent: this });
+    this.ssmAccessCommand = apiService.ssmAccessCommand;
 
-    // const frontendService =
     new WebEcsService("FrontendWebService", {
-      // defined locally
-      name: "frontend",
-      command: ["nginx", "-g", "daemon off;"],
-      port: 80,
+      name: "web-ui", // This value is hard-coded in GitHub Actions
+      command: ["node", ".output/server/index.mjs"],
+      port: 3000,
       healthCheckPath: "/",
       listenerArn: props.listenerArn,
       pathPatterns: ["/*"],
@@ -187,7 +199,7 @@ export class EcsAppComponent extends pulumi.ComponentResource {
 
     // const workerService =
     new WorkerEcsService("WorkerService", {
-      name: "default",
+      name: "default", // this value is hard-coded in GitHub Actions
       command: ["celery", "--app=backend.celery_app:app", "worker", "--loglevel=INFO", "-Q", "default"],
       envVars,
       appSgId: props.appSgId,
@@ -200,7 +212,7 @@ export class EcsAppComponent extends pulumi.ComponentResource {
 
     // const schedulerService =
     new SchedulerEcsService("SchedulerService", {
-      name: "beat",
+      name: "beat", // this value is hard-coded in GitHub Actions
       command: ["celery", "--app=backend.celery_app:app", "beat", "--loglevel=INFO"],
       envVars,
       appSgId: props.appSgId,
@@ -212,7 +224,7 @@ export class EcsAppComponent extends pulumi.ComponentResource {
     }, { parent: this });
 
     const backendUpdateTask = new ManagementCommandTask("BackendUpdateTask", {
-      name: "backendUpdate",
+      name: "backend_update", // this value is hard-coded in GitHub Actions
       command: ["python", "manage.py", "pre_update"],
       envVars,
       cpu: "1024",
@@ -224,6 +236,5 @@ export class EcsAppComponent extends pulumi.ComponentResource {
       executionRoleArn: iamResources.taskExecutionRole.arn,
       taskRoleArn: iamResources.ecsTaskRole.arn,
     }, { parent: this });
-    this.backendUpdateScript = backendUpdateTask.executionScript;
   }
 }
