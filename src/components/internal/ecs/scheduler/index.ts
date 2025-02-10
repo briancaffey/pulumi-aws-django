@@ -27,7 +27,7 @@ export class SchedulerEcsService extends pulumi.ComponentResource {
   /**
    * Creates a new async worker service or scheduling daemon service (e.g. celery, celery beat)
    * @param name The _unique_ name of the resource.
-   * @param props Props to pass to AdHocBaseEnv component
+   * @param props Props to pass to EcsBaseEnv component
    * @param opts A bag of options that control this resource's behavior.
    */
   constructor(name: string, props: SchedulerEcsServiceProps, opts?: pulumi.ResourceOptions) {

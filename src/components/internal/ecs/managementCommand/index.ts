@@ -29,7 +29,7 @@ export class ManagementCommandTask extends pulumi.ComponentResource {
   /**
    * Creates a task definition and a script to run the task using AWS CLI an any application deployment
    * @param name The _unique_ name of the resource.
-   * @param props Props to pass to AdHocBaseEnv component
+   * @param props Props to pass to EcsBaseEnv component
    * @param opts A bag of options that control this resource's behavior.
    */
   constructor(name: string, props: ManagementCommandTaskProps, opts?: pulumi.ResourceOptions) {

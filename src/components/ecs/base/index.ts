@@ -13,7 +13,7 @@ registerAutoTags({
 });
 
 /**
- * The inputs needed for setting up and ad hoc environment
+ * The inputs needed for setting up an ecs base environment
  */
 interface EcsBaseEnvComponentProps {
   certificateArn: string;
@@ -21,7 +21,7 @@ interface EcsBaseEnvComponentProps {
 }
 
 /**
- * Base resources for Ad Hoc environments.
+ * Base resources for ECS environments.
  * Includes networking resources (VPC, SG, ALB, CloudMap), RDS and S3
  */
 export class EcsBaseEnvComponent extends pulumi.ComponentResource {
@@ -39,9 +39,9 @@ export class EcsBaseEnvComponent extends pulumi.ComponentResource {
   public readonly rdsPasswordSecretName: pulumi.Output<string>;
 
   /**
-   * Creates base resources to support ad hoc application environments
+   * Creates base resources to support ecs app environments
    * @param name The _unique_ name of the resource.
-   * @param props Props to pass to AdHocBaseEnv component
+   * @param props Props to pass to EcsBaseEnv component
    * @param opts A bag of options that control this resource's behavior.
    */
   constructor(name: string, props: EcsBaseEnvComponentProps, opts?: pulumi.ResourceOptions) {

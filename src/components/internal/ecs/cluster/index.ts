@@ -11,7 +11,7 @@ export class EcsClusterResources extends pulumi.ComponentResource {
   /**
    * Creates a new static website hosted on AWS.
    * @param name The _unique_ name of the resource.
-   * @param props Props to pass to AdHocBaseEnv component
+   * @param props Props to pass to EcsBaseEnv component
    * @param opts A bag of options that control this resource's behavior.
    */
   constructor(name: string, props: EcsClusterResourcesProps, opts?: pulumi.ResourceOptions) {

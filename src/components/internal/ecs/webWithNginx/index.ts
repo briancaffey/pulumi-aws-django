@@ -46,7 +46,7 @@ export class WebEcsServiceWithNginx extends pulumi.ComponentResource {
   /**
    * Creates a load balanced fargate service and associated CloudWatch resources
    * @param name The _unique_ name of the resource.
-   * @param props Props to pass to AdHocBaseEnv component
+   * @param props Props to pass to EcsBaseEnv component
    * @param opts A bag of options that control this resource's behavior.
    */
   constructor(name: string, props: WebEcsServiceWithNginxProps, opts?: pulumi.ResourceOptions) {

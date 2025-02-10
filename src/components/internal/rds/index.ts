@@ -15,7 +15,7 @@ export class RdsResources extends pulumi.ComponentResource {
   /**
    * Creates a new static website hosted on AWS.
    * @param name The _unique_ name of the resource.
-   * @param props Props to pass to AdHocBaseEnv component
+   * @param props Props to pass to EcsBaseEnv component
    * @param opts A bag of options that control this resource's behavior.
    */
   constructor(name: string, props: RdsResourcesProps, opts?: pulumi.ResourceOptions) {
@@ -106,8 +106,6 @@ export class RdsResources extends pulumi.ComponentResource {
       skipFinalSnapshot: true,
       backupRetentionPeriod: 7,
       dbSubnetGroupName: dbSubnetGroup.name,
-      // for prod environments, the prod base stackName is the same as the prod app stack name
-      // ad hoc environments have dedicated databases that are created outside of IAC
       dbName: stackName,
       parameterGroupName: dbParameterGroup.name
     }, { parent: this });

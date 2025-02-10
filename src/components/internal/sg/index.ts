@@ -12,7 +12,7 @@ export class SecurityGroupResources extends pulumi.ComponentResource {
   /**
    * Creates ALB and Application Security Groups
    * @param name The _unique_ name of the resource.
-   * @param props Props to pass to AdHocBaseEnv component
+   * @param props Props to pass to EcsBaseEnv component
    * @param opts A bag of options that control this resource's behavior.
    */
   constructor(name: string, props: SecurityGroupResourcesProps, opts?: pulumi.ResourceOptions) {

@@ -19,7 +19,6 @@ const domainName = stackReference.getOutput("domainName") as pulumi.Output<strin
 const baseStackName = stackReference.getOutput("baseStackName") as pulumi.Output<string>;
 const rdsPasswordSecretName = stackReference.getOutput("rdsPasswordSecretName") as pulumi.Output<string>;
 
-// ad hoc app env
 const ecsAppComponent = new EcsAppComponent("EcsAppComponent", {
   vpcId,
   assetsBucketName,

@@ -11,7 +11,7 @@ export class CwLoggingResources extends pulumi.ComponentResource {
   /**
    * Creates a log group and log stream to be used by containers in ECS tasks
    * @param name The _unique_ name of the resource.
-   * @param props Props to pass to AdHocBaseEnv component
+   * @param props Props to pass to EcsBaseEnv component
    * @param opts A bag of options that control this resource's behavior.
    */
   constructor(name: string, props: CwLoggingResourcesProps, opts?: pulumi.ResourceOptions) {
