@@ -176,11 +176,23 @@ export class EcsAppComponent extends pulumi.ComponentResource {
     }, { parent: this });
     this.ssmAccessCommand = apiService.ssmAccessCommand;
 
+    const webUiEnvVarsAll = pulumi.all([
+      props.domainName,
+    ]);
+
+    let webUiEnvVars = webUiEnvVarsAll.apply(([domainName]) => [
+      {
+        name: "NUXT_PUBLIC_API_BASE",
+        value: `https://${stackName}.${domainName}`,
+      }
+    ]);
+
     new WebEcsService("FrontendWebService", {
       name: "web-ui", // This value is hard-coded in GitHub Actions
-      command: ["node", ".output/server/index.mjs"],
+      command: ["node", ".output/server/index.mjs"], // command for running Nuxt.js site in SSR mode
       port: 3000,
       healthCheckPath: "/",
+      envVars: webUiEnvVars,
       listenerArn: props.listenerArn,
       pathPatterns: ["/*"],
       hostName,
