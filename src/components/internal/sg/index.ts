@@ -113,7 +113,7 @@ export class SecurityGroupResources extends pulumi.ComponentResource {
     });
 
     const albIngressRuleHttp = new aws.vpc.SecurityGroupIngressRule("albIngressRuleHttp", {
-      securityGroupId: appSecurityGroup.id,
+      securityGroupId: albSecurityGroup.id,
       ipProtocol: "tcp",
       fromPort: 80,
       toPort: 80,
@@ -122,7 +122,7 @@ export class SecurityGroupResources extends pulumi.ComponentResource {
     });
 
     const albIngressRuleHttps = new aws.vpc.SecurityGroupIngressRule("albIngressRuleHttps", {
-      securityGroupId: appSecurityGroup.id,
+      securityGroupId: albSecurityGroup.id,
       ipProtocol: "tcp",
       fromPort: 443,
       toPort: 443,
