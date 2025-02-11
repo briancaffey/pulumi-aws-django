@@ -115,12 +115,14 @@ There are similar commands for building the `app` stack infrastructure.
 
 TODO - add a section here about using this repo with GitHub Actions
 
-## Release Process
+## Release Process for `pulumi-aws-django`
 
 Releases are managed by `release-please`. The following secrets have been added to this GitHub repository:
 
 - NPM_TOKEN (npm API key)
 - GH_PAT (GitHub Personal Access Token with the ability to update workflows)
+
+Pushes to main will update a PR with changes in `CHANGELOG.md` and `package*.json`. Merging this PR creates a new version (e.g. `v1.2.3`).
 
 ## TODO
 
