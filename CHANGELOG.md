@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.28.1](https://github.com/briancaffey/pulumi-aws-django/compare/v1.28.0...v1.28.1) (2025-02-11)
+
+
+### Bug Fixes
+
+* **readme:** add info about release process in readme ([4a9e458](https://github.com/briancaffey/pulumi-aws-django/commit/4a9e45846834dfcea1c270f7f82a3f1e1ca10954))
+
 ## [1.28.0](https://github.com/briancaffey/pulumi-aws-django/compare/v1.27.0...v1.28.0) (2025-02-10)
 
 
